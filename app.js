@@ -215,10 +215,11 @@ async function buildFrequencyTable() {
     const response = await fetch('draws.json');
     const data = await response.json();
 
-    const draws = Array.isArray(data) ? data : data.draws;
+    // ✅ Your JSON has a "draws" property containing the array
+    const draws = data.draws;
 
     if (!Array.isArray(draws)) {
-        console.error("draws.json format error: expected an array or {draws: []}");
+        console.error("draws.json format error: expected {draws: []}");
         return {};
     }
 
@@ -226,9 +227,9 @@ async function buildFrequencyTable() {
     for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
     draws.forEach(draw => {
-        const nums = draw.numbers || draw.main;
-        if (Array.isArray(nums)) {
-            nums.forEach(num => frequency[num]++);
+        // ✅ Each draw has a "numbers" array
+        if (Array.isArray(draw.numbers)) {
+            draw.numbers.forEach(num => frequency[num]++);
         }
     });
 
