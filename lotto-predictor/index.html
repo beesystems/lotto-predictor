@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lotto 6/49 Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html">Dashboard</a>
+    <a href="add-draw.html">Add Draw</a>
+    <a href="model.html">Model</a>
+    <a href="donate.html">Donate</a>
+  </nav>
+
+  <main class="grid">
+    <section class="column">
+      <div class="card">
+        <h3>Prediction Mode</h3>
+        <select id="mode">
+          <option value="conservative">Conservative</option>
+          <option value="hybrid" selected>Hybrid</option>
+          <option value="aggressive">Aggressive</option>
+        </select>
+        <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
+      </div>
+    </section>
+
+    <section class="column">
+      <div class="card" id="prediction">
+        <h3>Predicted Numbers</h3>
+        <div class="number-badges"></div>
+      </div>
+
+      <div class="card">
+        <h3>Frequency</h3>
+        <canvas id="frequencyChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Recency (Last 20 Draws)</h3>
+        <canvas id="recencyChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Structural Score</h3>
+        <canvas id="structuralChart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

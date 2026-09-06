@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Model</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html">Dashboard</a>
+    <a href="add-draw.html">Add Draw</a>
+    <a href="model.html">Model</a>
+    <a href="donate.html">Donate</a>
+  </nav>
+
+  <main class="single">
+    <div class="card">
+      <h3>Prediction Model</h3>
+      <p>This site uses a weighted model combining:</p>
+      <ul>
+        <li>Structural patterns (odd/even, low/high, decades, primes, sum)</li>
+        <li>Frequency (long-term hot/cold behaviour)</li>
+        <li>Recency (last N draws, streaks)</li>
+        <li>Pair clustering (numbers that often appear together)</li>
+      </ul>
+      <p>Modes adjust the weights:</p>
+      <ul>
+        <li><strong>Conservative:</strong> structure-focused</li>
+        <li><strong>Hybrid:</strong> balanced structure + momentum</li>
+        <li><strong>Aggressive:</strong> momentum-focused</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>
