@@ -80,15 +80,14 @@ body {
 }
 
 .badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  display: inline-block;
+  background: #0066ff;
+  color: white;
+  padding: 10px 14px;
+  margin: 5px;
   border-radius: 50%;
-  border: 2px solid #1976d2;
-  background: #e3f2fd;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
 .hint {
