@@ -281,7 +281,7 @@ async function loadAllCharts() {
 loadAllCharts();
 
 // ===============================
-//  PREDICTION BUTTON
+//  PREDICTION BUTTON (FIXED)
 // ===============================
 
 async function setupPredictionButton() {
@@ -290,27 +290,34 @@ async function setupPredictionButton() {
     const output = document.querySelector("#prediction .number-badges");
 
     btn.addEventListener("click", async () => {
-        // Load draws
-        const response = await fetch("draws.json");
-        const data = await response.json();
-        const draws = data.draws;
+        try {
+            const response = await fetch("draws.json");
+            const data = await response.json();
 
-        // Get selected mode
-        const mode = modeSelect.value;
+            // ✅ Safety check
+            const draws = Array.isArray(data.draws) ? data.draws : [];
+            if (draws.length === 0) {
+                console.error("No draws found in draws.json");
+                output.innerHTML = "<p style='color:red'>Error: No draws found.</p>";
+                return;
+            }
 
-        // Generate prediction
-        const prediction = generatePrediction(draws, mode);
+            const mode = modeSelect.value;
 
-        // Clear old results
-        output.innerHTML = "";
+            // ✅ Generate prediction safely
+            const prediction = generatePrediction(draws, mode);
 
-        // Render new results
-        prediction.forEach(p => {
-            const badge = document.createElement("div");
-            badge.className = "badge";
-            badge.textContent = p.number;
-            output.appendChild(badge);
-        });
+            output.innerHTML = "";
+            prediction.forEach(p => {
+                const badge = document.createElement("div");
+                badge.className = "badge";
+                badge.textContent = p.number;
+                output.appendChild(badge);
+            });
+        } catch (err) {
+            console.error("Prediction error:", err);
+            output.innerHTML = "<p style='color:red'>Prediction failed. Check console.</p>";
+        }
     });
 }
 
