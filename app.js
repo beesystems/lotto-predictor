@@ -252,4 +252,19 @@ async function loadAllCharts() {
     data: {
       labels: [...Array(49).keys()].map(i => i + 1),
       datasets: [{
-        label: 'Frequency
+        label: 'Frequency',
+        data: Object.values(frequency),
+        backgroundColor: 'rgba(0, 99, 255, 0.5)'
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  buildRecencyChart(draws);
+}
+
+loadAllCharts
