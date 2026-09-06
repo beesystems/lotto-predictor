@@ -1,4 +1,7 @@
+// =========================
 // Shared helpers
+// =========================
+
 function loadDraws() {
   return JSON.parse(localStorage.getItem("draws")) || [];
 }
@@ -13,7 +16,10 @@ const WEIGHTS = {
   aggressive:   { structure: 0.20, frequency: 0.40, recency: 0.30, pairs: 0.10 }
 };
 
-// Add Draw page
+// =========================
+// Add Draw Page
+// =========================
+
 const addBtn = document.getElementById("addDrawBtn");
 if (addBtn) {
   addBtn.addEventListener("click", () => {
@@ -33,7 +39,10 @@ if (addBtn) {
   });
 }
 
-// Dashboard page
+// =========================
+// Dashboard Page
+// =========================
+
 const predictBtn = document.getElementById("predictBtn");
 if (predictBtn) {
   predictBtn.addEventListener("click", () => {
@@ -45,6 +54,10 @@ if (predictBtn) {
   });
 }
 
+// =========================
+// Feature Computation
+// =========================
+
 function computeFeatures(n, draws) {
   return {
     structure: structuralScore(n),
@@ -53,6 +66,10 @@ function computeFeatures(n, draws) {
     pairs:     pairScore(n, draws)
   };
 }
+
+// =========================
+// Prediction Engine
+// =========================
 
 function generatePrediction(draws, mode) {
   const weights = WEIGHTS[mode];
@@ -65,11 +82,16 @@ function generatePrediction(draws, mode) {
       weights.frequency * f.frequency +
       weights.recency   * f.recency +
       weights.pairs     * f.pairs;
+
     return { number: n, score };
   });
 
   return scores.sort((a, b) => b.score - a.score).slice(0, 6);
 }
+
+// =========================
+// Render Prediction
+// =========================
 
 function renderPrediction(prediction, mode) {
   const container = document.querySelector("#prediction .number-badges");
@@ -79,12 +101,15 @@ function renderPrediction(prediction, mode) {
     .join("");
 }
 
+// =========================
 // Charts
+// =========================
+
 function updateCharts(draws, prediction) {
   const numbers = Array.from({ length: 49 }, (_, i) => i + 1);
+
   const freqData = numbers.map(n => frequencyScore(n, draws));
   const recencyData = numbers.map(n => recencyScore(n, draws));
-
 
   const structuralScores = {
     oddEven: structuralOddEven(prediction),
@@ -136,3 +161,37 @@ function updateCharts(draws, prediction) {
     });
   }
 }
+
+// =========================
+// REAL SCORING FUNCTIONS
+// =========================
+
+// ---- Structural Score ----
+function structuralScore(n) {
+  let score = 0;
+
+  score += 0.5; // odd/even neutral
+  score += 0.5; // low/high neutral
+
+  const decade = Math.floor((n - 1) / 10);
+  const decadeWeight = [0.6, 0.8, 1.0, 0.8, 0.6];
+  score += decadeWeight[decade];
+
+  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+  if (primes.includes(n)) score += 0.5;
+
+  return score / 4;
+}
+
+// ---- Frequency Score ----
+function computeFrequency(n, draws) {
+  let count = 0;
+  draws.forEach(d => {
+    if (d.numbers.includes(n)) count++;
+  });
+  return count;
+}
+
+function frequencyScore(n, draws) {
+  const freq = computeFrequency(n, draws);
+  const maxFreq = Math.max(...Array.from({length:49}, (_,i)=>computeFrequency(i+1,draw
