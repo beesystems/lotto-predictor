@@ -1,79 +1,156 @@
-// =========================
-// Shared helpers
-// =========================
+// ===============================
+//  LOTTO ANALYTICS ENGINE
+// ===============================
 
-function loadDraws() {
-  return JSON.parse(localStorage.getItem("draws")) || [];
-}
-
-function saveDraws(draws) {
-  localStorage.setItem("draws", JSON.stringify(draws));
-}
-
+// ---------- WEIGHTS ----------
 const WEIGHTS = {
-  conservative: { structure: 0.60, frequency: 0.20, recency: 0.10, pairs: 0.10 },
-  hybrid:       { structure: 0.40, frequency: 0.30, recency: 0.20, pairs: 0.10 },
-  aggressive:   { structure: 0.20, frequency: 0.40, recency: 0.30, pairs: 0.10 }
+  default: {
+    structure: 0.25,
+    frequency: 0.25,
+    recency: 0.25,
+    pairs: 0.25
+  },
+  bonus: {
+    structure: 0.35,
+    frequency: 0.30,
+    recency: 0.20,
+    pairs: 0.15
+  }
 };
 
-// =========================
-// Add Draw Page
-// =========================
+// ===============================
+//  STRUCTURAL SCORING
+// ===============================
 
-const addBtn = document.getElementById("addDrawBtn");
-if (addBtn) {
-  addBtn.addEventListener("click", () => {
-    const numbers = [
-      +document.getElementById("n1").value,
-      +document.getElementById("n2").value,
-      +document.getElementById("n3").value,
-      +document.getElementById("n4").value,
-      +document.getElementById("n5").value,
-      +document.getElementById("n6").value
-    ];
-    const bonus = +document.getElementById("bonus").value;
-
-    const draws = loadDraws();
-    draws.push({ numbers, bonus });
-    saveDraws(draws);
-  });
+// Odd/Even balance
+function structuralOddEven(prediction) {
+  const odd = prediction.filter(n => n % 2 !== 0).length;
+  const even = prediction.length - odd;
+  return 1 - Math.abs(odd - even) / prediction.length;
 }
 
-// =========================
-// Dashboard Page
-// =========================
-
-const predictBtn = document.getElementById("predictBtn");
-if (predictBtn) {
-  predictBtn.addEventListener("click", () => {
-    const mode = document.getElementById("mode").value;
-    const draws = loadDraws();
-    const prediction = generatePrediction(draws, mode);
-    renderPrediction(prediction, mode);
-    updateCharts(draws, prediction);
-  });
+// Low/High balance (1–24 low, 25–49 high)
+function structuralLowHigh(prediction) {
+  const low = prediction.filter(n => n <= 24).length;
+  const high = prediction.length - low;
+  return 1 - Math.abs(low - high) / prediction.length;
 }
 
-// =========================
-// Feature Computation
-// =========================
+// Decade distribution (1–9, 10–19, 20–29, 30–39, 40–49)
+function structuralDecades(prediction) {
+  const buckets = [0,0,0,0,0];
+  prediction.forEach(n => buckets[Math.floor(n / 10)]++);
+  const ideal = prediction.length / 5;
+  const deviation = buckets.reduce((sum, b) => sum + Math.abs(b - ideal), 0);
+  return 1 - deviation / prediction.length;
+}
+
+// Prime number balance
+function structuralPrimes(prediction) {
+  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+  const count = prediction.filter(n => primes.includes(n)).length;
+  const ideal = prediction.length * 0.3;
+  return 1 - Math.abs(count - ideal) / prediction.length;
+}
+
+// Sum range (ideal 100–180)
+function structuralSum(prediction) {
+  const sum = prediction.reduce((a,b) => a + b, 0);
+  if (sum < 100 || sum > 180) return 0;
+  return 1 - Math.abs(sum - 140) / 140;
+}
+
+// Pair adjacency (avoid too many consecutive numbers)
+function structuralPairs(prediction) {
+  let pairs = 0;
+  const sorted = [...prediction].sort((a,b) => a - b);
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i-1] + 1) pairs++;
+  }
+  return 1 - pairs / prediction.length;
+}
+
+// Combined structural score for a single number
+function structuralScore(n) {
+  const decade = Math.floor(n / 10);
+  const primeList = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+
+  let score = 0;
+
+  // Balanced decade distribution
+  score += (decade >= 0 && decade <= 4) ? 0.25 : 0;
+
+  // Prime bonus
+  score += primeList.includes(n) ? 0.25 : 0;
+
+  // Middle-range bonus
+  score += (n >= 10 && n <= 39) ? 0.25 : 0;
+
+  // Avoid extremes
+  score += (n !== 1 && n !== 49) ? 0.25 : 0;
+
+  return score;
+}
+
+// ===============================
+//  FREQUENCY SCORING
+// ===============================
+
+function frequencyScore(n, draws) {
+  const count = draws.reduce((sum, d) => sum + (d.main.includes(n) ? 1 : 0), 0);
+  return count / draws.length;
+}
+
+// ===============================
+//  RECENCY SCORING
+// ===============================
+
+function recencyScore(n, draws) {
+  for (let i = draws.length - 1; i >= 0; i--) {
+    if (draws[i].main.includes(n)) {
+      return 1 - i / draws.length;
+    }
+  }
+  return 0;
+}
+
+// ===============================
+//  PAIR SCORING
+// ===============================
+
+function pairScore(n, draws) {
+  let score = 0;
+  draws.forEach(d => {
+    const sorted = [...d.main].sort((a,b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === sorted[i-1] + 1 && (sorted[i] === n || sorted[i-1] === n)) {
+        score += 1;
+      }
+    }
+  });
+  return score / draws.length;
+}
+
+// ===============================
+//  FEATURE COMPUTATION
+// ===============================
 
 function computeFeatures(n, draws) {
   return {
     structure: structuralScore(n),
     frequency: frequencyScore(n, draws),
-    recency:   recencyScore(n, draws),
-    pairs:     pairScore(n, draws)
+    recency: recencyScore(n, draws),
+    pairs: pairScore(n, draws)
   };
 }
 
-// =========================
-// Prediction Engine
-// =========================
+// ===============================
+//  PREDICTION ENGINE
+// ===============================
 
-function generatePrediction(draws, mode) {
+function generatePrediction(draws, mode = "default") {
   const weights = WEIGHTS[mode];
-  const numbers = Array.from({ length: 49 }, (_, i) => i + 1);
+  const numbers = [...Array(49).keys()].map(i => i + 1);
 
   const scores = numbers.map(n => {
     const f = computeFeatures(n, draws);
@@ -86,112 +163,46 @@ function generatePrediction(draws, mode) {
     return { number: n, score };
   });
 
-  return scores.sort((a, b) => b.score - a.score).slice(0, 6);
+  return scores.sort((a,b) => b.score - a.score).slice(0, 6);
 }
 
-// =========================
-// Render Prediction
-// =========================
+// ===============================
+//  CHART DATA GENERATION
+// ===============================
 
-function renderPrediction(prediction, mode) {
-  const container = document.querySelector("#prediction .number-badges");
-  if (!container) return;
-  container.innerHTML = prediction
-    .map(p => `<span class="badge">${p.number}</span>`)
-    .join("");
+function generateCharts(draws) {
+  const numbers = [...Array(49).keys()].map(i => i + 1);
+
+  return {
+    frequency: numbers.map(n => frequencyScore(n, draws)),
+    recency: numbers.map(n => recencyScore(n, draws)),
+    pairs: numbers.map(n => pairScore(n, draws))
+  };
 }
 
-// =========================
-// Charts
-// =========================
+// ===============================
+//  STRUCTURAL BREAKDOWN FOR UI
+// ===============================
 
-function updateCharts(draws, prediction) {
-  const numbers = Array.from({ length: 49 }, (_, i) => i + 1);
-
-  const freqData = numbers.map(n => frequencyScore(n, draws));
-  const recencyData = numbers.map(n => recencyScore(n, draws));
-
-  const structuralScores = {
+function structuralBreakdown(prediction) {
+  return {
     oddEven: structuralOddEven(prediction),
     lowHigh: structuralLowHigh(prediction),
     decades: structuralDecades(prediction),
-    primes:  structuralPrimes(prediction),
-    sum:     structuralSum(prediction),
-    pairs:   structuralPairs(prediction)
+    primes: structuralPrimes(prediction),
+    sum: structuralSum(prediction),
+    pairs: structuralPairs(prediction)
   };
-
-  const freqCtx = document.getElementById("frequencyChart");
-  const recCtx = document.getElementById("recencyChart");
-  const structCtx = document.getElementById("structuralChart");
-
-  if (freqCtx) {
-    new Chart(freqCtx, {
-      type: "bar",
-      data: {
-        labels: numbers,
-        datasets: [{ data: freqData, backgroundColor: "#1E88E5" }]
-      },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
-    });
-  }
-
-  if (recCtx) {
-    new Chart(recCtx, {
-      type: "bar",
-      data: {
-        labels: numbers,
-        datasets: [{ data: recencyData, backgroundColor: "#90CAF9" }]
-      },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
-    });
-  }
-
-  if (structCtx) {
-    new Chart(structCtx, {
-      type: "radar",
-      data: {
-        labels: ["Odd/Even", "Low/High", "Decades", "Primes", "Sum", "Pairs"],
-        datasets: [{
-          label: "Structural Score",
-          data: Object.values(structuralScores),
-          backgroundColor: "rgba(30,136,229,0.2)",
-          borderColor: "#1E88E5"
-        }]
-      }
-    });
-  }
 }
 
-// =========================
-// REAL SCORING FUNCTIONS
-// =========================
+// ===============================
+//  EXPORT (if using modules)
+// ===============================
 
-// ---- Structural Score ----
-function structuralScore(n) {
-  let score = 0;
-
-  score += 0.5; // odd/even neutral
-  score += 0.5; // low/high neutral
-
-  const decade = Math.floor((n - 1) / 10);
-  const decadeWeight = [0.6, 0.8, 1.0, 0.8, 0.6];
-  score += decadeWeight[decade];
-
-  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
-  if (primes.includes(n)) score += 0.5;
-
-  return score / 4;
+if (typeof module !== "undefined") {
+  module.exports = {
+    generatePrediction,
+    generateCharts,
+    structuralBreakdown
+  };
 }
-
-// ---- Frequency Score ----
-function computeFrequency(n, draws) {
-  let count = 0;
-  draws.forEach(d => {
-    if (d.numbers.includes(n)) count++;
-  });
-  return count;
-}
-
-function frequencyScore(n, draws) {
-  const freq = computeFrequency(n, draws);
-  const maxFreq = Math.max(...Array.from({length:49}, (_,i)=>computeFrequency(i+1,draw
