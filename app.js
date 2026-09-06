@@ -210,6 +210,22 @@ if (typeof module !== "undefined") {
 // ===============================
 //  Build Frequency Table
 // ===============================
+buildFrequencyTable().then(freq => {
+    const ctx = document.getElementById('frequencyChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [...Array(49).keys()].map(i => i + 1),
+            datasets: [{
+                label: 'Frequency',
+                data: Object.values(freq),
+                backgroundColor: 'rgba(0, 99, 255, 0.5)'
+            }]
+        }
+    });
+});
+
 async function buildFrequencyTable() {
     const response = await fetch('data/draws.json');
     const draws = await response.json();
@@ -230,7 +246,16 @@ async function buildFrequencyTable() {
     return frequency;
 }
 
-// Example usage:
-buildFrequencyTable().then(freq => {
-    console.log("Frequency Table:", freq);
-});
+function renderFrequencyTable(freq) {
+    const container = document.getElementById('frequency-table');
+    let html = "<h2>Number Frequency</h2><table><tr><th>Number</th><th>Count</th></tr>";
+
+    for (let i = 1; i <= 49; i++) {
+        html += `<tr><td>${i}</td><td>${freq[i]}</td></tr>`;
+    }
+
+    html += "</table>";
+    container.innerHTML = html;
+}
+
+buildFrequencyTable().then(renderFrequencyTable);
