@@ -77,16 +77,9 @@ function structuralScore(n) {
 
   let score = 0;
 
-  // Balanced decade distribution
   score += (decade >= 0 && decade <= 4) ? 0.25 : 0;
-
-  // Prime bonus
   score += primeList.includes(n) ? 0.25 : 0;
-
-  // Middle-range bonus
   score += (n >= 10 && n <= 39) ? 0.25 : 0;
-
-  // Avoid extremes
   score += (n !== 1 && n !== 49) ? 0.25 : 0;
 
   return score;
@@ -97,7 +90,7 @@ function structuralScore(n) {
 // ===============================
 
 function frequencyScore(n, draws) {
-  const count = draws.reduce((sum, d) => sum + (d.main.includes(n) ? 1 : 0), 0);
+  const count = draws.reduce((sum, d) => sum + (d.numbers.includes(n) ? 1 : 0), 0);
   return count / draws.length;
 }
 
@@ -107,7 +100,7 @@ function frequencyScore(n, draws) {
 
 function recencyScore(n, draws) {
   for (let i = draws.length - 1; i >= 0; i--) {
-    if (draws[i].main.includes(n)) {
+    if (draws[i].numbers.includes(n)) {
       return 1 - i / draws.length;
     }
   }
@@ -121,7 +114,7 @@ function recencyScore(n, draws) {
 function pairScore(n, draws) {
   let score = 0;
   draws.forEach(d => {
-    const sorted = [...d.main].sort((a,b) => a - b);
+    const sorted = [...d.numbers].sort((a,b) => a - b);
     for (let i = 1; i < sorted.length; i++) {
       if (sorted[i] === sorted[i-1] + 1 && (sorted[i] === n || sorted[i-1] === n)) {
         score += 1;
@@ -167,20 +160,6 @@ function generatePrediction(draws, mode = "default") {
 }
 
 // ===============================
-//  CHART DATA GENERATION
-// ===============================
-
-function generateCharts(draws) {
-  const numbers = [...Array(49).keys()].map(i => i + 1);
-
-  return {
-    frequency: numbers.map(n => frequencyScore(n, draws)),
-    recency: numbers.map(n => recencyScore(n, draws)),
-    pairs: numbers.map(n => pairScore(n, draws))
-  };
-}
-
-// ===============================
 //  STRUCTURAL BREAKDOWN FOR UI
 // ===============================
 
@@ -196,31 +175,16 @@ function structuralBreakdown(prediction) {
 }
 
 // ===============================
-//  EXPORT (if using modules)
-// ===============================
-
-if (typeof module !== "undefined") {
-  module.exports = {
-    generatePrediction,
-    generateCharts,
-    structuralBreakdown
-  };
-}
-// ===============================
-//  Build Frequency Table
+//  FREQUENCY TABLE
 // ===============================
 
 async function buildFrequencyTable() {
     const response = await fetch('draws.json');
     const data = await response.json();
-
-    // ✅ Your JSON has a "draws" property containing the array
     const draws = data.draws;
 
-    // Safety check
-    if (!draws || !Array.isArray(draws)) {
+    if (!Array.isArray(draws)) {
         console.error("draws.json format error: expected {draws: []}");
-        console.log("Loaded data:", data);
         return {};
     }
 
@@ -228,9 +192,7 @@ async function buildFrequencyTable() {
     for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
     draws.forEach(draw => {
-        if (Array.isArray(draw.numbers)) {
-            draw.numbers.forEach(num => frequency[num]++);
-        }
+        draw.numbers.forEach(num => frequency[num]++);
     });
 
     return frequency;
@@ -248,37 +210,9 @@ function renderFrequencyTable(freq) {
     container.innerHTML = html;
 }
 
-buildFrequencyTable().then(freq => {
-    renderFrequencyTable(freq);
-
-    const ctx = document.getElementById('frequencyChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [...Array(49).keys()].map(i => i + 1),
-            datasets: [{
-                label: 'Frequency',
-                data: Object.values(freq),
-                backgroundColor: 'rgba(0, 99, 255, 0.5)'
-            }]
-        }
-    });
-});
-
 // ===============================
 //  RECENCY CHART
 // ===============================
-
-// Recency score: how recently each number appeared
-function recencyScore(n, draws) {
-    for (let i = draws.length - 1; i >= 0; i--) {
-        const nums = draws[i].numbers;   // your JSON uses "numbers"
-        if (nums.includes(n)) {
-            return 1 - i / draws.length; // recent numbers score higher
-        }
-    }
-    return 0; // never seen
-}
 
 function buildRecencyChart(draws) {
     const ctx = document.getElementById('recencyChart').getContext('2d');
@@ -312,7 +246,6 @@ async function loadAllCharts() {
     const data = await response.json();
     const draws = data.draws;
 
-    // Safety check
     if (!Array.isArray(draws)) {
         console.error("draws.json format error: expected {draws: []}");
         return;
