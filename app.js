@@ -206,3 +206,31 @@ if (typeof module !== "undefined") {
     structuralBreakdown
   };
 }
+
+// ===============================
+//  Build Frequency Table
+// ===============================
+async function buildFrequencyTable() {
+    const response = await fetch('data/draws.json');
+    const draws = await response.json();
+
+    // Initialize frequency map
+    const frequency = {};
+    for (let i = 1; i <= 49; i++) {
+        frequency[i] = 0;
+    }
+
+    // Count occurrences
+    draws.forEach(draw => {
+        draw.numbers.forEach(num => {
+            frequency[num]++;
+        });
+    });
+
+    return frequency;
+}
+
+// Example usage:
+buildFrequencyTable().then(freq => {
+    console.log("Frequency Table:", freq);
+});
