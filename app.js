@@ -227,7 +227,7 @@ buildFrequencyTable().then(freq => {
 });
 
 async function buildFrequencyTable() {
-    const response = await fetch('data/draws.json');
+    const response = await fetch('draws.json');
     const draws = await response.json();
 
     // Initialize frequency map
