@@ -279,3 +279,39 @@ async function loadAllCharts() {
 }
 
 loadAllCharts();
+
+// ===============================
+//  PREDICTION BUTTON
+// ===============================
+
+async function setupPredictionButton() {
+    const btn = document.getElementById("predictBtn");
+    const modeSelect = document.getElementById("mode");
+    const output = document.querySelector("#prediction .number-badges");
+
+    btn.addEventListener("click", async () => {
+        // Load draws
+        const response = await fetch("draws.json");
+        const data = await response.json();
+        const draws = data.draws;
+
+        // Get selected mode
+        const mode = modeSelect.value;
+
+        // Generate prediction
+        const prediction = generatePrediction(draws, mode);
+
+        // Clear old results
+        output.innerHTML = "";
+
+        // Render new results
+        prediction.forEach(p => {
+            const badge = document.createElement("div");
+            badge.className = "badge";
+            badge.textContent = p.number;
+            output.appendChild(badge);
+        });
+    });
+}
+
+setupPredictionButton();
