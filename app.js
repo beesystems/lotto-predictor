@@ -46,12 +46,11 @@ if (predictBtn) {
 }
 
 function computeFeatures(n, draws) {
-  // TODO: implement real structural + frequency logic
   return {
-    structure: Math.random(),
-    frequency: Math.random(),
-    recency:   Math.random(),
-    pairs:     Math.random()
+    structure: structuralScore(n),
+    frequency: frequencyScore(n, draws),
+    recency:   recencyScore(n, draws),
+    pairs:     pairScore(n, draws)
   };
 }
 
@@ -83,16 +82,17 @@ function renderPrediction(prediction, mode) {
 // Charts
 function updateCharts(draws, prediction) {
   const numbers = Array.from({ length: 49 }, (_, i) => i + 1);
-  const freqData = numbers.map(() => Math.random());
-  const recencyData = numbers.map(() => Math.random());
+  const freqData = numbers.map(n => frequencyScore(n, draws));
+  const recencyData = numbers.map(n => recencyScore(n, draws));
+
 
   const structuralScores = {
-    oddEven: Math.random(),
-    lowHigh: Math.random(),
-    decades: Math.random(),
-    primes:  Math.random(),
-    sum:     Math.random(),
-    pairs:   Math.random()
+    oddEven: structuralOddEven(prediction),
+    lowHigh: structuralLowHigh(prediction),
+    decades: structuralDecades(prediction),
+    primes:  structuralPrimes(prediction),
+    sum:     structuralSum(prediction),
+    pairs:   structuralPairs(prediction)
   };
 
   const freqCtx = document.getElementById("frequencyChart");
