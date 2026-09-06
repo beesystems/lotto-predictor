@@ -229,7 +229,8 @@ buildFrequencyTable().then(freq => {
 
 async function buildFrequencyTable() {
     const response = await fetch('draws.json');
-    const draws = await response.json();
+    const data = await response.json(); // rename to 'data'
+    const draws = data.draws; // access the array inside
 
     const frequency = {};
     for (let i = 1; i <= 49; i++) frequency[i] = 0;
