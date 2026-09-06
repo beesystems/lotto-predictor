@@ -302,3 +302,47 @@ function buildRecencyChart(draws) {
         }
     });
 }
+
+// ===============================
+//  LOAD DATA + BUILD ALL CHARTS
+// ===============================
+
+async function loadAllCharts() {
+    const response = await fetch('draws.json');
+    const data = await response.json();
+    const draws = data.draws;
+
+    // Safety check
+    if (!Array.isArray(draws)) {
+        console.error("draws.json format error: expected {draws: []}");
+        return;
+    }
+
+    // ----- FREQUENCY -----
+    const frequency = {};
+    for (let i = 1; i <= 49; i++) frequency[i] = 0;
+
+    draws.forEach(draw => {
+        draw.numbers.forEach(num => frequency[num]++);
+    });
+
+    renderFrequencyTable(frequency);
+
+    const freqCtx = document.getElementById('frequencyChart').getContext('2d');
+    new Chart(freqCtx, {
+        type: 'bar',
+        data: {
+            labels: [...Array(49).keys()].map(i => i + 1),
+            datasets: [{
+                label: 'Frequency',
+                data: Object.values(frequency),
+                backgroundColor: 'rgba(0, 99, 255, 0.5)'
+            }]
+        }
+    });
+
+    // ----- RECENCY -----
+    buildRecencyChart(draws);
+}
+
+loadAllCharts();
