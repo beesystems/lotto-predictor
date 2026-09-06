@@ -206,7 +206,6 @@ if (typeof module !== "undefined") {
     structuralBreakdown
   };
 }
-
 // ===============================
 //  Build Frequency Table
 // ===============================
@@ -218,8 +217,10 @@ async function buildFrequencyTable() {
     // ✅ Your JSON has a "draws" property containing the array
     const draws = data.draws;
 
-    if (!Array.isArray(draws)) {
+    // Safety check
+    if (!draws || !Array.isArray(draws)) {
         console.error("draws.json format error: expected {draws: []}");
+        console.log("Loaded data:", data);
         return {};
     }
 
@@ -227,7 +228,6 @@ async function buildFrequencyTable() {
     for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
     draws.forEach(draw => {
-        // ✅ Each draw has a "numbers" array
         if (Array.isArray(draw.numbers)) {
             draw.numbers.forEach(num => frequency[num]++);
         }
