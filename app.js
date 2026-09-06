@@ -211,32 +211,25 @@ if (typeof module !== "undefined") {
 //  Build Frequency Table
 // ===============================
 
-buildFrequencyTable().then(freq => {
-    const ctx = document.getElementById('frequencyChart').getContext('2d');
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [...Array(49).keys()].map(i => i + 1),
-            datasets: [{
-                label: 'Frequency',
-                data: Object.values(freq),
-                backgroundColor: 'rgba(0, 99, 255, 0.5)'
-            }]
-        }
-    });
-});
-
 async function buildFrequencyTable() {
     const response = await fetch('draws.json');
-    const data = await response.json(); // rename to 'data'
-    const draws = data.draws; // access the array inside
+    const data = await response.json();
+
+    const draws = Array.isArray(data) ? data : data.draws;
+
+    if (!Array.isArray(draws)) {
+        console.error("draws.json format error: expected an array or {draws: []}");
+        return {};
+    }
 
     const frequency = {};
     for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
     draws.forEach(draw => {
-        draw.numbers.forEach(num => frequency[num]++);
+        const nums = draw.numbers || draw.main;
+        if (Array.isArray(nums)) {
+            nums.forEach(num => frequency[num]++);
+        }
     });
 
     return frequency;
@@ -254,4 +247,19 @@ function renderFrequencyTable(freq) {
     container.innerHTML = html;
 }
 
-buildFrequencyTable().then(renderFrequencyTable);
+buildFrequencyTable().then(freq => {
+    renderFrequencyTable(freq);
+
+    const ctx = document.getElementById('frequencyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [...Array(49).keys()].map(i => i + 1),
+            datasets: [{
+                label: 'Frequency',
+                data: Object.values(freq),
+                backgroundColor: 'rgba(0, 99, 255, 0.5)'
+            }]
+        }
+    });
+});
