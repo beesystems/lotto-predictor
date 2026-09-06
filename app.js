@@ -264,3 +264,41 @@ buildFrequencyTable().then(freq => {
         }
     });
 });
+
+// ===============================
+//  RECENCY CHART
+// ===============================
+
+// Recency score: how recently each number appeared
+function recencyScore(n, draws) {
+    for (let i = draws.length - 1; i >= 0; i--) {
+        const nums = draws[i].numbers;   // your JSON uses "numbers"
+        if (nums.includes(n)) {
+            return 1 - i / draws.length; // recent numbers score higher
+        }
+    }
+    return 0; // never seen
+}
+
+function buildRecencyChart(draws) {
+    const ctx = document.getElementById('recencyChart').getContext('2d');
+
+    const recencyValues = [...Array(49).keys()].map(i => recencyScore(i + 1, draws));
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [...Array(49).keys()].map(i => i + 1),
+            datasets: [{
+                label: 'Recency (1 = very recent)',
+                data: recencyValues,
+                backgroundColor: 'rgba(255, 99, 132, 0.5)'
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
