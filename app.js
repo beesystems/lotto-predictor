@@ -147,6 +147,8 @@ function generatePrediction(draws, mode = "hybrid") {
 
   const scores = numbers.map(n => {
     const f = computeFeatures(n, draws);
+    if (!f) return { number: n, score: 0 };
+
     const score =
       weights.structure * f.structure +
       weights.frequency * f.frequency +
@@ -157,21 +159,6 @@ function generatePrediction(draws, mode = "hybrid") {
   });
 
   return scores.sort((a,b) => b.score - a.score).slice(0, 6);
-}
-
-// ===============================
-//  STRUCTURAL BREAKDOWN FOR UI
-// ===============================
-
-function structuralBreakdown(prediction) {
-  return {
-    oddEven: structuralOddEven(prediction),
-    lowHigh: structuralLowHigh(prediction),
-    decades: structuralDecades(prediction),
-    primes: structuralPrimes(prediction),
-    sum: structuralSum(prediction),
-    pairs: structuralPairs(prediction)
-  };
 }
 
 // ===============================
@@ -250,7 +237,6 @@ async function loadAllCharts() {
     return;
   }
 
-  // ----- FREQUENCY -----
   const frequency = {};
   for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
@@ -266,5 +252,4 @@ async function loadAllCharts() {
     data: {
       labels: [...Array(49).keys()].map(i => i + 1),
       datasets: [{
-        label: 'Frequency',
-        data: Object.values
+        label: 'Frequency
