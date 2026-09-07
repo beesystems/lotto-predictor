@@ -57,12 +57,14 @@ function structuralPairs(prediction) {
 
 function structuralScore(n) {
   const decade = Math.floor(n / 10);
-  const primeList = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
   let score = 0;
+
   score += (decade >= 0 && decade <= 4) ? 0.25 : 0;
-  score += primeList.includes(n) ? 0.25 : 0;
+  score += primes.includes(n) ? 0.25 : 0;
   score += (n >= 10 && n <= 39) ? 0.25 : 0;
   score += (n !== 1 && n !== 49) ? 0.25 : 0;
+
   return score;
 }
 
@@ -102,6 +104,7 @@ function computeFeatures(n, draws) {
     console.error("Invalid draws data passed to computeFeatures:", draws);
     return { structure: 0, frequency: 0, recency: 0, pairs: 0 };
   }
+
   return {
     structure: structuralScore(n),
     frequency: frequencyScore(n, draws),
@@ -130,6 +133,7 @@ function generatePrediction(draws, mode = "hybrid") {
       weights.frequency * f.frequency +
       weights.recency   * f.recency +
       weights.pairs     * f.pairs;
+
     return { number: n, score };
   });
 
@@ -240,4 +244,82 @@ function buildStructuralChart(prediction) {
       }]
     },
     options: {
-      scales:
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 1,
+          ticks: { stepSize: 0.2 }
+        }
+      }
+    }
+  });
+}
+
+// ===============================
+//  LOAD ALL CHARTS
+// ===============================
+
+async function loadAllCharts() {
+  const response = await fetch('draws.json');
+  const data = await response.json();
+  const draws = Array.isArray(data.draws) ? data.draws : data;
+
+  if (!Array.isArray(draws)) {
+    console.error("draws.json format error");
+    return;
+  }
+
+  const frequency = {};
+  for (let i = 1; i <= 49; i++) frequency[i] = 0;
+
+  draws.forEach(draw => {
+    draw.numbers.forEach(num => frequency[num]++);
+  });
+
+  renderFrequencyTable(frequency);
+  renderFrequencyChart(frequency);
+  buildRecencyChart(draws);
+}
+
+// ===============================
+//  PREDICTION BUTTON
+// ===============================
+
+function setupPredictionButton() {
+  const btn = document.getElementById("predictBtn");
+  const modeSelect = document.getElementById("mode");
+  const output = document.querySelector("#prediction .number-badges");
+
+  btn.addEventListener("click", async () => {
+    const response = await fetch("draws.json");
+    const data = await response.json();
+    const draws = Array.isArray(data.draws) ? data.draws : data;
+
+    const mode = modeSelect.value;
+    const prediction = generatePrediction(draws, mode);
+
+    if (!Array.isArray(prediction)) {
+      output.innerHTML = "<p style='color:red'>Prediction failed.</p>";
+      return;
+    }
+
+    output.innerHTML = "";
+    prediction.forEach(p => {
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = p.number;
+      output.appendChild(badge);
+    });
+
+    buildStructuralChart(prediction.map(p => p.number));
+  });
+}
+
+// ===============================
+//  INITIALIZE DASHBOARD
+// ===============================
+
+window.addEventListener("DOMContentLoaded", () => {
+  loadAllCharts();
+  setupPredictionButton();
+});
