@@ -517,4 +517,5 @@ async function setupDownloadButton() {
 window.addEventListener("DOMContentLoaded", () => {
   loadAllCharts();
   setupPredictionButton();
+  setupDownloadButton();
 });
