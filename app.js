@@ -5,8 +5,8 @@
 // ---------- WEIGHTS ----------
 const WEIGHTS = {
   conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15 },
-  hybrid: { structure: 0.25, frequency: 0.25, recency: 0.25, pairs: 0.25 },
-  aggressive: { structure: 0.15, frequency: 0.35, recency: 0.30, pairs: 0.20 }
+  hybrid:       { structure: 0.25, frequency: 0.25, recency: 0.25, pairs: 0.25 },
+  aggressive:   { structure: 0.15, frequency: 0.35, recency: 0.30, pairs: 0.20 }
 };
 
 // ===============================
@@ -117,7 +117,7 @@ function computeFeatures(n, draws) {
 //  PREDICTION ENGINE
 // ===============================
 
-function generatePrediction(draws, mode = "hybrid") {
+function generateRankedScores(draws, mode = "hybrid") {
   const weights = WEIGHTS[mode] || WEIGHTS.hybrid;
   const numbers = [...Array(49).keys()].map(i => i + 1);
 
@@ -132,7 +132,7 @@ function generatePrediction(draws, mode = "hybrid") {
     return { number: n, score };
   });
 
-  return scores.sort((a,b) => b.score - a.score).slice(0, 6);
+  return scores.sort((a,b) => b.score - a.score);
 }
 
 // ===============================
@@ -161,63 +161,48 @@ function classifyFrequency(freq, number) {
 
   const f = freq[number];
 
-  if (f >= max * 0.75) return "hot";     // top 25%
-  if (f <= min * 1.25) return "cold";    // bottom 25%
-  return "warm";                         // middle range
+  if (f >= max * 0.75) return "hot";
+  if (f <= min * 1.25) return "cold";
+  return "warm";
 }
 
 // ===============================
-//  FREQUENCY TABLE + CHART
+//  RENDER RANKED SETS (2–10)
 // ===============================
 
-let frequencyChartInstance = null;
+function renderRankedSets(scores) {
+  const container = document.getElementById("ranked-sets");
+  container.innerHTML = "";
 
-function renderFrequencyChart(frequency) {
-  const ctx = document.getElementById('frequencyChart').getContext('2d');
-  if (frequencyChartInstance) frequencyChartInstance.destroy();
+  for (let setIndex = 1; setIndex < 10; setIndex++) {
+    const start = setIndex * 6;
+    const end = start + 6;
+    const setNumbers = scores.slice(start, end).map(s => s.number);
 
-  frequencyChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: [...Array(49).keys()].map(i => i + 1),
-      datasets: [{
-        label: 'Frequency',
-        data: Object.values(frequency),
-        backgroundColor: 'rgba(0, 99, 255, 0.5)'
-      }]
-    },
-    options: { scales: { y: { beginAtZero: true } } }
-  });
-}
+    const card = document.createElement("div");
+    card.className = "card";
 
-function renderFrequencyTable(freq) {
-  const container = document.getElementById('frequency-table');
-  let html = "<table><tr><th>Number</th><th>Count</th></tr>";
-  for (let i = 1; i <= 49; i++) html += `<tr><td>${i}</td><td>${freq[i]}</td></tr>`;
-  html += "</table>";
-  container.innerHTML = html;
-}
+    const title = document.createElement("h3");
+    title.textContent = `Set ${setIndex + 1}`;
+    card.appendChild(title);
 
-// ===============================
-//  RECENCY CHART
-// ===============================
+    const badgeContainer = document.createElement("div");
+    badgeContainer.className = "number-badges";
 
-function buildRecencyChart(draws) {
-  const ctx = document.getElementById('recencyChart').getContext('2d');
-  const recencyValues = [...Array(49).keys()].map(i => recencyScore(i + 1, draws));
+    setNumbers.forEach(num => {
+      const badge = document.createElement("div");
+      badge.className = "badge";
 
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: [...Array(49).keys()].map(i => i + 1),
-      datasets: [{
-        label: 'Recency (1 = very recent)',
-        data: recencyValues,
-        backgroundColor: 'rgba(255, 99, 132, 0.5)'
-      }]
-    },
-    options: { scales: { y: { beginAtZero: true } } }
-  });
+      const category = classifyFrequency(frequencyCache, num);
+      badge.classList.add(category);
+
+      badge.textContent = num;
+      badgeContainer.appendChild(badge);
+    });
+
+    card.appendChild(badgeContainer);
+    container.appendChild(card);
+  }
 }
 
 // ===============================
@@ -304,21 +289,28 @@ function setupPredictionButton() {
     const draws = Array.isArray(data.draws) ? data.draws : data;
 
     const mode = modeSelect.value;
-    const prediction = generatePrediction(draws, mode);
+    const scores = generateRankedScores(draws, mode);
+
+    // Set 1 (main prediction)
+    const set1 = scores.slice(0, 6).map(s => s.number);
 
     output.innerHTML = "";
-    prediction.forEach(p => {
+    set1.forEach(num => {
       const badge = document.createElement("div");
       badge.className = "badge";
 
-      const category = classifyFrequency(frequencyCache, p.number);
+      const category = classifyFrequency(frequencyCache, num);
       badge.classList.add(category);
 
-      badge.textContent = p.number;
+      badge.textContent = num;
       output.appendChild(badge);
     });
 
-    buildStructuralChart(prediction.map(p => p.number));
+    // Structural chart for Set 1
+    buildStructuralChart(set1);
+
+    // Render Sets 2–10
+    renderRankedSets(scores);
   });
 }
 
