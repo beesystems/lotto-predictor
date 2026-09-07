@@ -10,6 +10,11 @@ const WEIGHTS = {
 };
 
 // ===============================
+//  GLOBAL FREQUENCY CACHE
+// ===============================
+let frequencyCache = {};
+
+// ===============================
 //  STRUCTURAL SCORING
 // ===============================
 
@@ -100,11 +105,6 @@ function pairScore(n, draws) {
 // ===============================
 
 function computeFeatures(n, draws) {
-  if (!Array.isArray(draws)) {
-    console.error("Invalid draws data passed to computeFeatures:", draws);
-    return { structure: 0, frequency: 0, recency: 0, pairs: 0 };
-  }
-
   return {
     structure: structuralScore(n),
     frequency: frequencyScore(n, draws),
@@ -118,11 +118,6 @@ function computeFeatures(n, draws) {
 // ===============================
 
 function generatePrediction(draws, mode = "hybrid") {
-  if (!Array.isArray(draws)) {
-    console.error("generatePrediction received invalid draws:", draws);
-    return [];
-  }
-
   const weights = WEIGHTS[mode] || WEIGHTS.hybrid;
   const numbers = [...Array(49).keys()].map(i => i + 1);
 
@@ -153,6 +148,22 @@ function structuralBreakdown(prediction) {
     sum: structuralSum(prediction),
     pairs: structuralPairs(prediction)
   };
+}
+
+// ===============================
+//  HOT / COLD CLASSIFICATION
+// ===============================
+
+function classifyFrequency(freq, number) {
+  const values = Object.values(freq);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+
+  const f = freq[number];
+
+  if (f >= max * 0.75) return "hot";     // top 25%
+  if (f <= min * 1.25) return "cold";    // bottom 25%
+  return "warm";                         // middle range
 }
 
 // ===============================
@@ -264,17 +275,14 @@ async function loadAllCharts() {
   const data = await response.json();
   const draws = Array.isArray(data.draws) ? data.draws : data;
 
-  if (!Array.isArray(draws)) {
-    console.error("draws.json format error");
-    return;
-  }
-
   const frequency = {};
   for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
   draws.forEach(draw => {
     draw.numbers.forEach(num => frequency[num]++);
   });
+
+  frequencyCache = frequency;
 
   renderFrequencyTable(frequency);
   renderFrequencyChart(frequency);
@@ -298,15 +306,14 @@ function setupPredictionButton() {
     const mode = modeSelect.value;
     const prediction = generatePrediction(draws, mode);
 
-    if (!Array.isArray(prediction)) {
-      output.innerHTML = "<p style='color:red'>Prediction failed.</p>";
-      return;
-    }
-
     output.innerHTML = "";
     prediction.forEach(p => {
       const badge = document.createElement("div");
       badge.className = "badge";
+
+      const category = classifyFrequency(frequencyCache, p.number);
+      badge.classList.add(category);
+
       badge.textContent = p.number;
       output.appendChild(badge);
     });
