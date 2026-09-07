@@ -103,7 +103,11 @@
 
   <script>
     let frequencyCache = {};
+    let frequencyReady = false;
 
+    /* ============================================================
+       LOAD FREQUENCY FIRST (FIXES ALL-RED BALL ISSUE)
+    ============================================================ */
     async function loadFrequency() {
       const response = await fetch("draws.json");
       const data = await response.json();
@@ -117,19 +121,31 @@
       });
 
       frequencyCache = freq;
+      frequencyReady = true;
     }
 
+    window.addEventListener("DOMContentLoaded", loadFrequency);
+
+    /* ============================================================
+       SAFE HOT/WARM/COLD CLASSIFIER
+    ============================================================ */
     function classifyFrequency(freq, number) {
       const values = Object.values(freq);
       const max = Math.max(...values);
       const min = Math.min(...values);
       const f = freq[number];
 
+      // Prevent "all hot" or "all cold" when freq not loaded
+      if (max === min) return "warm";
+
       if (f >= max * 0.75) return "hot";
       if (f <= min * 1.25) return "cold";
       return "warm";
     }
 
+    /* ============================================================
+       STRUCTURAL FUNCTIONS (FROM YOUR MODEL)
+    ============================================================ */
     function structuralDecades(prediction) {
       const buckets = [0, 0, 0, 0, 0];
       prediction.forEach(n => buckets[Math.floor(n / 10)]++);
@@ -195,6 +211,9 @@
       );
     }
 
+    /* ============================================================
+       RANDOM SET GENERATOR
+    ============================================================ */
     function generateRandomSet(options) {
       let set = [];
 
@@ -235,8 +254,14 @@
       return { main: set };
     }
 
+    /* ============================================================
+       GENERATE MULTIPLE SETS
+    ============================================================ */
     async function generateSets() {
-      await loadFrequency();
+      if (!frequencyReady) {
+        alert("Loading frequency data… please wait 1–2 seconds.");
+        return;
+      }
 
       const count = Math.min(20, Math.max(1, parseInt(document.getElementById("setCount").value)));
       const options = {
@@ -304,6 +329,9 @@
 
     document.getElementById("generateRandomBtn").addEventListener("click", generateSets);
 
+    /* ============================================================
+       COPY + PRINT
+    ============================================================ */
     document.getElementById("copyBtn").addEventListener("click", () => {
       const sets = [...document.querySelectorAll("#random-list")].map(d => d.textContent).join("\n");
       navigator.clipboard.writeText(sets);
