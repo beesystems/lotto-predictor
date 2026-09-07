@@ -4,24 +4,9 @@
 
 // ---------- WEIGHTS ----------
 const WEIGHTS = {
-  conservative: {
-    structure: 0.35,
-    frequency: 0.30,
-    recency: 0.20,
-    pairs: 0.15
-  },
-  hybrid: {
-    structure: 0.25,
-    frequency: 0.25,
-    recency: 0.25,
-    pairs: 0.25
-  },
-  aggressive: {
-    structure: 0.15,
-    frequency: 0.35,
-    recency: 0.30,
-    pairs: 0.20
-  }
+  conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15 },
+  hybrid: { structure: 0.25, frequency: 0.25, recency: 0.25, pairs: 0.25 },
+  aggressive: { structure: 0.15, frequency: 0.35, recency: 0.30, pairs: 0.20 }
 };
 
 // ===============================
@@ -74,12 +59,10 @@ function structuralScore(n) {
   const decade = Math.floor(n / 10);
   const primeList = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
   let score = 0;
-
   score += (decade >= 0 && decade <= 4) ? 0.25 : 0;
   score += primeList.includes(n) ? 0.25 : 0;
   score += (n >= 10 && n <= 39) ? 0.25 : 0;
   score += (n !== 1 && n !== 49) ? 0.25 : 0;
-
   return score;
 }
 
@@ -94,9 +77,7 @@ function frequencyScore(n, draws) {
 
 function recencyScore(n, draws) {
   for (let i = draws.length - 1; i >= 0; i--) {
-    if (draws[i].numbers.includes(n)) {
-      return 1 - i / draws.length;
-    }
+    if (draws[i].numbers.includes(n)) return 1 - i / draws.length;
   }
   return 0;
 }
@@ -106,9 +87,7 @@ function pairScore(n, draws) {
   draws.forEach(d => {
     const sorted = [...d.numbers].sort((a,b) => a - b);
     for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] === sorted[i-1] + 1 && (sorted[i] === n || sorted[i-1] === n)) {
-        score += 1;
-      }
+      if (sorted[i] === sorted[i-1] + 1 && (sorted[i] === n || sorted[i-1] === n)) score++;
     }
   });
   return score / draws.length;
@@ -123,7 +102,6 @@ function computeFeatures(n, draws) {
     console.error("Invalid draws data passed to computeFeatures:", draws);
     return { structure: 0, frequency: 0, recency: 0, pairs: 0 };
   }
-
   return {
     structure: structuralScore(n),
     frequency: frequencyScore(n, draws),
@@ -147,14 +125,11 @@ function generatePrediction(draws, mode = "hybrid") {
 
   const scores = numbers.map(n => {
     const f = computeFeatures(n, draws);
-    if (!f) return { number: n, score: 0 };
-
     const score =
       weights.structure * f.structure +
       weights.frequency * f.frequency +
       weights.recency   * f.recency +
       weights.pairs     * f.pairs;
-
     return { number: n, score };
   });
 
@@ -162,37 +137,48 @@ function generatePrediction(draws, mode = "hybrid") {
 }
 
 // ===============================
-//  FREQUENCY TABLE
+//  STRUCTURAL BREAKDOWN
 // ===============================
 
-async function buildFrequencyTable() {
-  const response = await fetch('draws.json');
-  const data = await response.json();
-  const draws = Array.isArray(data.draws) ? data.draws : data;
+function structuralBreakdown(prediction) {
+  return {
+    oddEven: structuralOddEven(prediction),
+    lowHigh: structuralLowHigh(prediction),
+    decades: structuralDecades(prediction),
+    primes: structuralPrimes(prediction),
+    sum: structuralSum(prediction),
+    pairs: structuralPairs(prediction)
+  };
+}
 
-  if (!Array.isArray(draws)) {
-    console.error("draws.json format error: expected {draws: []}");
-    return {};
-  }
+// ===============================
+//  FREQUENCY TABLE + CHART
+// ===============================
 
-  const frequency = {};
-  for (let i = 1; i <= 49; i++) frequency[i] = 0;
+let frequencyChartInstance = null;
 
-  draws.forEach(draw => {
-    draw.numbers.forEach(num => frequency[num]++);
+function renderFrequencyChart(frequency) {
+  const ctx = document.getElementById('frequencyChart').getContext('2d');
+  if (frequencyChartInstance) frequencyChartInstance.destroy();
+
+  frequencyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [...Array(49).keys()].map(i => i + 1),
+      datasets: [{
+        label: 'Frequency',
+        data: Object.values(frequency),
+        backgroundColor: 'rgba(0, 99, 255, 0.5)'
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
   });
-
-  return frequency;
 }
 
 function renderFrequencyTable(freq) {
   const container = document.getElementById('frequency-table');
   let html = "<table><tr><th>Number</th><th>Count</th></tr>";
-
-  for (let i = 1; i <= 49; i++) {
-    html += `<tr><td>${i}</td><td>${freq[i]}</td></tr>`;
-  }
-
+  for (let i = 1; i <= 49; i++) html += `<tr><td>${i}</td><td>${freq[i]}</td></tr>`;
   html += "</table>";
   container.innerHTML = html;
 }
@@ -215,107 +201,15 @@ function buildRecencyChart(draws) {
         backgroundColor: 'rgba(255, 99, 132, 0.5)'
       }]
     },
-    options: {
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+    options: { scales: { y: { beginAtZero: true } } }
   });
 }
-
-// ===============================
-//  LOAD DATA + BUILD ALL CHARTS
-// ===============================
-
-async function loadAllCharts() {
-  const response = await fetch('draws.json');
-  const data = await response.json();
-  const draws = Array.isArray(data.draws) ? data.draws : data;
-
-  if (!Array.isArray(draws)) {
-    console.error("draws.json format error: expected {draws: []}");
-    return;
-  }
-
-  const frequency = {};
-  for (let i = 1; i <= 49; i++) frequency[i] = 0;
-
-  draws.forEach(draw => {
-    draw.numbers.forEach(num => frequency[num]++);
-  });
-
-  renderFrequencyTable(frequency);
-
-  const freqCtx = document.getElementById('frequencyChart').getContext('2d');
-  new Chart(freqCtx, {
-    type: 'bar',
-    data: {
-      labels: [...Array(49).keys()].map(i => i + 1),
-      datasets: [{
-        label: 'Frequency',
-        data: Object.values(frequency),
-        backgroundColor: 'rgba(0, 99, 255, 0.5)'
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
-  });
-
-  buildRecencyChart(draws);
-}
-
-loadAllCharts();
-
-
-// ===============================
-//  PREDICTION BUTTON
-// ===============================
-
-async function setupPredictionButton() {
-  const btn = document.getElementById("predictBtn");
-  const modeSelect = document.getElementById("mode");
-  const output = document.querySelector("#prediction .number-badges");
-
-  btn.addEventListener("click", async () => {
-    const response = await fetch("draws.json");
-    const data = await response.json();
-    const draws = Array.isArray(data.draws) ? data.draws : data;
-
-    if (!Array.isArray(draws)) {
-      console.error("Invalid draws.json format");
-      output.innerHTML = "<p style='color:red'>Error: No draws found.</p>";
-      return;
-    }
-
-    const mode = modeSelect.value;
-    const prediction = generatePrediction(draws, mode);
-
-    output.innerHTML = "";
-    prediction.forEach(p => {
-      const badge = document.createElement("div");
-      badge.className = "badge";
-      badge.textContent = p.number;
-      output.appendChild(badge);
-    });
-    buildStructuralChart(prediction.map(p => p.number));
-  });
-}
-
-// ===============================
-//  INITIALIZE DASHBOARD
-// ===============================
-
-window.addEventListener("DOMContentLoaded", () => {
-  loadAllCharts();
-  setupPredictionButton();
-});
 
 // ===============================
 //  STRUCTURAL RADAR CHART
 // ===============================
+
+let structuralChartInstance = null;
 
 function buildStructuralChart(prediction) {
   const ctx = document.getElementById('structuralChart').getContext('2d');
@@ -331,7 +225,9 @@ function buildStructuralChart(prediction) {
     breakdown.pairs
   ];
 
-  new Chart(ctx, {
+  if (structuralChartInstance) structuralChartInstance.destroy();
+
+  structuralChartInstance = new Chart(ctx, {
     type: 'radar',
     data: {
       labels: labels,
@@ -344,13 +240,4 @@ function buildStructuralChart(prediction) {
       }]
     },
     options: {
-      scales: {
-        r: {
-          beginAtZero: true,
-          max: 1,
-          ticks: { stepSize: 0.2 }
-        }
-      }
-    }
-  });
-}
+      scales:
