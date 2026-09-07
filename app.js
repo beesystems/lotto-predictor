@@ -301,6 +301,7 @@ async function setupPredictionButton() {
       output.appendChild(badge);
     });
   });
+  buildStructuralChart(prediction.map(p => p.number));
 }
 
 // ===============================
@@ -312,3 +313,44 @@ window.addEventListener("DOMContentLoaded", () => {
   setupPredictionButton();
 });
 
+// ===============================
+//  STRUCTURAL RADAR CHART
+// ===============================
+
+function buildStructuralChart(prediction) {
+  const ctx = document.getElementById('structuralChart').getContext('2d');
+  const breakdown = structuralBreakdown(prediction);
+
+  const labels = ['Odd/Even', 'Low/High', 'Decades', 'Primes', 'Sum', 'Pairs'];
+  const data = [
+    breakdown.oddEven,
+    breakdown.lowHigh,
+    breakdown.decades,
+    breakdown.primes,
+    breakdown.sum,
+    breakdown.pairs
+  ];
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Structural Balance',
+        data: data,
+        backgroundColor: 'rgba(0, 99, 255, 0.3)',
+        borderColor: 'rgba(0, 99, 255, 0.8)',
+        pointBackgroundColor: 'rgba(0, 99, 255, 1)'
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 1,
+          ticks: { stepSize: 0.2 }
+        }
+      }
+    }
+  });
+}
