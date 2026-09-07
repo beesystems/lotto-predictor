@@ -12,9 +12,9 @@
 ============================================================ */
 
 const WEIGHTS = {
-  conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15 },
-  hybrid:       { structure: 0.25, frequency: 0.25, recency: 0.25, pairs: 0.25 },
-  aggressive:   { structure: 0.15, frequency: 0.35, recency: 0.30, pairs: 0.20 }
+  conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15, julian: 0.05 },
+  hybrid:       { structure: 0.25, frequency: 0.25, recency: 0.25, pairs: 0.25, julian: 0.10 },
+  aggressive:   { structure: 0.15, frequency: 0.35, recency: 0.30, pairs: 0.20, julian: 0.15 }
 };
 
 /* ============================================================
@@ -27,6 +27,28 @@ let structuralChartInstance = null;
 let frequencyChartInstance = null;
 let recencyChartInstance = null;
 let distributionChartInstance = null;
+
+/* ============================================================
+   JULIAN DATE HELPERS
+============================================================ */
+
+function getJulianDay(dateStr) {
+  const d = new Date(dateStr);
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d - start) / 86400000);
+}
+
+function getJulianDigits(dateStr) {
+  const j = getJulianDay(dateStr).toString();
+  return new Set(j.split("").map(Number));
+}
+
+/* ============================================================
+   TEMPORAL BIAS STATE
+============================================================ */
+
+let julianDigitCounts = Array.from({ length: 10 }, () => Array(50).fill(0));
+let julianTotalByDigit = Array(10).fill(0);
 
 /* ============================================================
    STRUCTURAL SCORING
@@ -118,6 +140,27 @@ function pairScore(n, draws) {
    FEATURE COMPUTATION
 ============================================================ */
 
+/* ============================================================
+   JULIAN DIGIT → NUMBER CORRELATION
+============================================================ */
+
+function processDrawsForJulian(draws) {
+  julianDigitCounts = Array.from({ length: 10 }, () => Array(50).fill(0));
+  julianTotalByDigit = Array(10).fill(0);
+
+  for (const draw of draws) {
+    const digits = getJulianDigits(draw.date);
+
+    for (const d of digits) {
+      julianTotalByDigit[d]++;
+
+      for (const num of draw.numbers) {
+        julianDigitCounts[d][num]++; // num is 1–49
+      }
+    }
+  }
+}
+
 function computeFeatures(n, draws) {
   return {
     structure: structuralScore(n),
@@ -125,6 +168,28 @@ function computeFeatures(n, draws) {
     recency: recencyScore(n, draws),
     pairs: pairScore(n, draws)
   };
+}
+
+/* ============================================================
+   JULIAN BIAS SCORING
+============================================================ */
+
+function julianBiasScore(n) {
+  let score = 0;
+  let activeDigits = 0;
+
+  for (let d = 0; d <= 9; d++) {
+    const total = julianTotalByDigit[d];
+    if (total === 0) continue;
+
+    const count = julianDigitCounts[d][n] || 0;
+    const freq = count / total;
+
+    score += freq;
+    activeDigits++;
+  }
+
+  return activeDigits === 0 ? 0 : score / activeDigits;
 }
 
 /* ============================================================
@@ -141,7 +206,8 @@ function generateRankedScores(draws, mode = "hybrid") {
       weights.structure * f.structure +
       weights.frequency * f.frequency +
       weights.recency   * f.recency +
-      weights.pairs     * f.pairs;
+      weights.pairs     * f.pairs +
+      weights.julian    * julianBiasScore(n);
 
     return { number: n, score };
   });
@@ -576,6 +642,46 @@ function buildStructuralChart(prediction) {
 }
 
 /* ============================================================
+   JULIAN CORRELATION CHART
+============================================================ */
+
+function buildJulianChart() {
+  const canvas = document.getElementById("julianChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  const labels = Array.from({ length: 49 }, (_, i) => i + 1);
+  const data = labels.map(n => julianBiasScore(n));
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Julian Bias Score",
+        data,
+        backgroundColor: "rgba(123, 31, 162, 0.6)"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true },
+        x: {
+          ticks: {
+            autoSkip: false,
+            maxRotation: 90,
+            minRotation: 45
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ============================================================
    DOWNLOAD CSV BUTTON
 ============================================================ */
 
@@ -635,6 +741,8 @@ async function loadAllCharts() {
   const data = await response.json();
   const draws = Array.isArray(data.draws) ? data.draws : data;
 
+  processDrawsForJulian(draws);
+   
   const frequency = {};
   for (let i = 1; i <= 49; i++) frequency[i] = 0;
 
@@ -648,6 +756,7 @@ async function loadAllCharts() {
   renderFrequencyChart(frequency);
   buildRecencyChart(draws);
   buildDistributionChart(draws);
+  buildJulianChart();
 }
 
 /* ============================================================
