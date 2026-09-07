@@ -10,60 +10,95 @@
 
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <a href="index.html" class="active">Dashboard</a>
-    <a href="model.html">Model</a>
-    <a href="donate.html">Donate</a>
-  </nav>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Lotto Predictor</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="model.html">Model</a>
+      <a href="donate.html">Donate</a>
+    </nav>
+  </aside>
 
-  <main class="grid">
+  <!-- MAIN CONTENT -->
+  <div class="main-layout">
+    <header class="topbar">
+      <h1>Dashboard</h1>
+      <p>Analyze historical draws and generate structured predictions.</p>
+    </header>
 
-    <!-- PREDICTION CONTROLS -->
-    <section class="card">
-      <h3>Prediction Mode</h3>
-      <select id="mode">
-        <option value="hybrid">Hybrid (Balanced)</option>
-        <option value="conservative">Conservative (Stable)</option>
-        <option value="aggressive">Aggressive (Hot/Recent)</option>
-      </select>
-      <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
-    </section>
+    <main class="content-grid">
 
-    <!-- MAIN PREDICTION (SET 1 ONLY) -->
-    <section id="prediction" class="card">
-      <h3>Prediction (Most Likely Set)</h3>
-      <div class="number-badges"></div>
-    </section>
+      <!-- LEFT COLUMN -->
+      <section class="column">
 
-    <!-- STRUCTURAL RADAR CHART -->
-    <section class="card">
-      <h3>Structural Balance</h3>
-      <canvas id="structuralChart"></canvas>
-    </section>
+        <!-- PREDICTION CONTROLS -->
+        <section class="card">
+          <h3>Prediction Mode</h3>
+          <p class="hint">Choose how the model balances structure, frequency, and recency.</p>
+          <select id="mode">
+            <option value="hybrid">Hybrid (Balanced)</option>
+            <option value="conservative">Conservative (Stable)</option>
+            <option value="aggressive">Aggressive (Hot/Recent)</option>
+          </select>
+          <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
+        </section>
 
-    <!-- RANKED SETS (SETS 2–10) -->
-    <section id="ranked-sets" class="grid"></section>
+        <!-- MAIN PREDICTION (SET 1 ONLY) -->
+        <section id="prediction" class="card">
+          <h3>Prediction (Most Likely Set)</h3>
+          <p class="hint">This set represents the highest‑scoring combination based on your selected mode.</p>
+          <div class="number-badges"></div>
+        </section>
 
-    <!-- FREQUENCY TABLE -->
-    <section class="card">
-      <h3>Frequency Table</h3>
-      <div id="frequency-table"></div>
-    </section>
+        <!-- STRUCTURAL RADAR CHART -->
+        <section class="card">
+          <h3>Structural Balance</h3>
+          <p class="hint">Visual breakdown of odd/even, low/high, decades, primes, sum, and pairs for the predicted set.</p>
+          <div class="chart-container">
+            <canvas id="structuralChart"></canvas>
+          </div>
+        </section>
 
-    <!-- FREQUENCY CHART -->
-    <section class="card">
-      <h3>Frequency Chart</h3>
-      <canvas id="frequencyChart"></canvas>
-    </section>
+      </section>
 
-    <!-- RECENCY CHART -->
-    <section class="card">
-      <h3>Recency Chart</h3>
-      <canvas id="recencyChart"></canvas>
-    </section>
+      <!-- RIGHT COLUMN -->
+      <section class="column">
 
-  </main>
+        <!-- RANKED SETS (3 SETS IN ONE CARD) -->
+        <section id="ranked-sets" class="card"></section>
+
+        <!-- FREQUENCY TABLE -->
+        <section class="card">
+          <h3>Frequency Table</h3>
+          <p class="hint">How often each number has appeared across all historical draws.</p>
+          <div id="frequency-table"></div>
+        </section>
+
+        <!-- FREQUENCY CHART -->
+        <section class="card">
+          <h3>Frequency Chart</h3>
+          <p class="hint">Bar chart showing the distribution of hits for numbers 1–49.</p>
+          <div class="chart-container">
+            <canvas id="frequencyChart"></canvas>
+          </div>
+        </section>
+
+        <!-- RECENCY CHART -->
+        <section class="card">
+          <h3>Recency Chart</h3>
+          <p class="hint">Number of draws since each number last appeared.</p>
+          <div class="chart-container">
+            <canvas id="recencyChart"></canvas>
+          </div>
+        </section>
+
+      </section>
+
+    </main>
+  </div>
 
   <script src="app.js"></script>
 
