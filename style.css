@@ -95,3 +95,18 @@ body {
   font-size: 0.85rem;
   color: #666;
 }
+
+.badge.hot {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.badge.warm {
+  background-color: #ffcc00;
+  color: black;
+}
+
+.badge.cold {
+  background-color: #4d79ff;
+  color: white;
+}
