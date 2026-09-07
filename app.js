@@ -214,12 +214,25 @@ function renderFrequencyChart(freq) {
       datasets: [{
         label: "Frequency",
         data,
-        backgroundColor: "rgba(0, 99, 255, 0.5)"
+        backgroundColor: "rgba(25, 118, 210, 0.6)"
       }]
     },
     options: {
+      plugins: {
+        legend: {
+          labels: {
+            font: { size: 13, family: "Segoe UI" }
+          }
+        }
+      },
       scales: {
-        y: { beginAtZero: true }
+        y: {
+          beginAtZero: true,
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        x: {
+          grid: { display: false }
+        }
       }
     }
   });
@@ -252,19 +265,32 @@ function buildRecencyChart(draws) {
       datasets: [{
         label: "Recency (draws since last hit)",
         data,
-        backgroundColor: "rgba(255, 99, 132, 0.5)"
+        backgroundColor: "rgba(244, 81, 108, 0.6)"
       }]
     },
     options: {
+      plugins: {
+        legend: {
+          labels: {
+            font: { size: 13, family: "Segoe UI" }
+          }
+        }
+      },
       scales: {
-        y: { beginAtZero: true }
+        y: {
+          beginAtZero: true,
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        x: {
+          grid: { display: false }
+        }
       }
     }
   });
 }
 
 // ===============================
-//  RENDER 3 RANKED SETS
+//  RENDER 3 RANKED SETS (ONE CARD)
 // ===============================
 
 function renderRankedSets(scores) {
@@ -273,7 +299,6 @@ function renderRankedSets(scores) {
 
   container.innerHTML = "";
 
-  // Create one card to hold all sets
   const card = document.createElement("div");
   card.className = "card";
 
@@ -281,7 +306,11 @@ function renderRankedSets(scores) {
   title.textContent = "Prediction Sets";
   card.appendChild(title);
 
-  // Wrapper for the three sets
+  const hint = document.createElement("p");
+  hint.className = "hint";
+  hint.textContent = "Three ranked sets based on the same scoring model, ordered from strongest to weakest.";
+  card.appendChild(hint);
+
   const setsWrapper = document.createElement("div");
   setsWrapper.className = "sets-wrapper";
 
@@ -292,7 +321,6 @@ function renderRankedSets(scores) {
 
     if (setNumbers.length < 6) break;
 
-    // Individual set block
     const setBlock = document.createElement("div");
     setBlock.className = "set-block";
 
@@ -321,7 +349,6 @@ function renderRankedSets(scores) {
   card.appendChild(setsWrapper);
   container.appendChild(card);
 }
-
 
 // ===============================
 //  STRUCTURAL RADAR CHART
@@ -355,17 +382,25 @@ function buildStructuralChart(prediction) {
       datasets: [{
         label: 'Structural Balance',
         data: data,
-        backgroundColor: 'rgba(0, 99, 255, 0.3)',
-        borderColor: 'rgba(0, 99, 255, 0.8)',
-        pointBackgroundColor: 'rgba(0, 99, 255, 1)'
+        backgroundColor: 'rgba(25, 118, 210, 0.25)',
+        borderColor: 'rgba(25, 118, 210, 0.8)',
+        pointBackgroundColor: 'rgba(25, 118, 210, 1)'
       }]
     },
     options: {
+      plugins: {
+        legend: {
+          labels: {
+            font: { size: 13, family: "Segoe UI" }
+          }
+        }
+      },
       scales: {
         r: {
           beginAtZero: true,
           max: 1,
-          ticks: { stepSize: 0.2 }
+          ticks: { stepSize: 0.2 },
+          grid: { color: "rgba(0,0,0,0.05)" }
         }
       }
     }
