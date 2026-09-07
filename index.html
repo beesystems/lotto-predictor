@@ -58,14 +58,24 @@
         <!-- MAIN PREDICTION -->
         <section id="prediction" class="card">
           <h3>Prediction (Most Likely Set)</h3>
-          <p class="hint">This set represents the highest‑scoring combination based on your selected mode.</p>
+          <div class="info-toggle">
+            <button class="info-btn">ℹ️ Info</button>
+              <div class="info-content">
+                <p>Your top-ranked 6-number set based on structural balance, frequency, recency, and pair scoring — sorted from smallest to largest.</p>
+              </div>
+          </div>
           <div class="number-badges"></div>
         </section>
 
         <!-- STRUCTURAL BALANCE CHART -->
         <section class="card">
           <h3>Structural Balance</h3>
-          <p class="hint">Breakdown of odd/even, low/high, decades, primes, sum, and pairs.</p>
+          <div class="info-toggle">
+            <button class="info-btn">ℹ️ Info</button>
+              <div class="info-content">
+                <p>Shows how well the predicted set aligns with typical structural patterns found in past winning draws (odd/even, low/high, decades, primes, sum range, and consecutive pairs).</p>
+              </div>
+          </div>
           <div class="chart-container">
             <canvas id="structuralChart"></canvas>
           </div>
@@ -74,7 +84,12 @@
         <!-- FREQUENCY CHART -->
         <section class="card">
           <h3>Frequency Chart</h3>
-          <p class="hint">How often each number has appeared across all draws.</p>
+          <div class="info-toggle">
+            <button class="info-btn">ℹ️ Info</button>
+              <div class="info-content">
+                <p>Displays how often each number has appeared historically. Higher bars indicate numbers that have been drawn more frequently over time.</p>
+              </div>
+          </div>
           <div class="chart-container">
             <canvas id="frequencyChart"></canvas>
           </div>
@@ -83,7 +98,12 @@
         <!-- RECENCY CHART -->
         <section class="card">
           <h3>Recency Chart</h3>
-          <p class="hint">Number of draws since each number last appeared.</p>
+          <div class="info-toggle">
+            <button class="info-btn">ℹ️ Info</button>
+              <div class="info-content">
+                <p>Shows how many draws have passed since each number last appeared. Taller bars represent numbers that haven’t shown up in a long time.</p>
+              </div>
+          </div>
           <div class="chart-container">
             <canvas id="recencyChart"></canvas>
           </div>
@@ -92,7 +112,12 @@
         <!-- DISTRIBUTION CHART -->
         <section class="card">
           <h3>Distribution of Draw Sums</h3>
-          <p class="hint">Histogram of draw sums (excluding bonus), with median and cluster markers.</p>
+          <div class="info-toggle">
+            <button class="info-btn">ℹ️ Info</button>
+              <div class="info-content">
+                <p>A histogram of the total sum of each draw. The median and cluster lines (120 and 160) help visualize where most draw sums tend to fall.</p>
+              </div>
+          </div>
           <div class="chart-container">
             <canvas id="distributionChart"></canvas>
           </div>
