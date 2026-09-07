@@ -850,6 +850,8 @@ async function loadAllCharts() {
   buildRecencyChart(draws);
   buildDistributionChart(draws);
   buildJulianChart();
+  buildJulianHeatmap();
+  renderDigitClusterTable();
 }
 
 /* ============================================================
@@ -871,7 +873,18 @@ function setupPredictionButton() {
     const draws = Array.isArray(data.draws) ? data.draws : data;
 
     const mode = modeSelect.value;
-    const scores = generateRankedScores(draws, mode);
+    let scores = generateRankedScores(draws, mode);
+
+    const temporalMode = document.getElementById("temporalMode").value;
+    const nextDrawDate = document.getElementById("nextDrawDate").value;
+
+    if (temporalMode === "julian") {
+      scores = julianWeightedPrediction(scores, nextDrawDate);
+    }
+
+    if (temporalMode === "hybrid") {
+      scores = julianWeightedPrediction(scores, nextDrawDate);
+    }
 
     const set1 = scores.slice(0, 6).map(s => s.number).sort((a, b) => a - b);
 
