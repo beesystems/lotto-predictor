@@ -655,6 +655,8 @@ function setupPredictionButton() {
   const modeSelect = document.getElementById("mode");
   const output = document.querySelector("#prediction .number-badges");
 
+  console.log("FREQUENCY CACHE:", frequencyCache);
+ 
   if (!btn || !modeSelect || !output) return;
 
   btn.addEventListener("click", async () => {
