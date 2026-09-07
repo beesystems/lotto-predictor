@@ -264,7 +264,7 @@ function buildRecencyChart(draws) {
 }
 
 // ===============================
-//  RENDER RANKED SETS (2–10)
+//  RENDER 3 RANKED SETS
 // ===============================
 
 function renderRankedSets(scores) {
@@ -273,12 +273,12 @@ function renderRankedSets(scores) {
 
   container.innerHTML = "";
 
-  for (let setIndex = 1; setIndex < 10; setIndex++) {
+  for (let setIndex = 0; setIndex < 3; setIndex++) {
     const start = setIndex * 6;
     const end = Math.min(start + 6, scores.length);
     const setNumbers = scores.slice(start, end).map(s => s.number);
 
-    if (setNumbers.length === 0) break;
+    if (setNumbers.length < 6) break;
 
     const card = document.createElement("div");
     card.className = "card";
