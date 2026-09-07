@@ -172,11 +172,15 @@ function classifyFrequency(freq, number) {
   const values = Object.values(freq);
   const max = Math.max(...values);
   const min = Math.min(...values);
-
+  const range = max - min;
   const f = freq[number];
 
-  if (f >= max * 0.75) return "hot";
-  if (f <= min * 1.25) return "cold";
+  // Define thresholds relative to range
+  const hotThreshold = max - range * 0.15;   // top 15%
+  const coldThreshold = min + range * 0.15;  // bottom 15%
+
+  if (f >= hotThreshold) return "hot";
+  if (f <= coldThreshold) return "cold";
   return "warm";
 }
 
