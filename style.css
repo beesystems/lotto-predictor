@@ -213,3 +213,33 @@ body {
     width: 100%;
   }
 }
+/* Collapsible Info Tips */
+.info-toggle {
+  margin-bottom: 1rem;
+}
+
+.info-btn {
+  background: #e2e8f0;
+  border: none;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.info-btn:hover {
+  background: #cbd5e1;
+}
+
+.info-content {
+  display: none;
+  background: #f8fafc;
+  border-left: 3px solid #1e40af;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.3;
+}
