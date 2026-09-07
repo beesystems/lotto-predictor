@@ -2,6 +2,10 @@
 //  LOTTO ANALYTICS ENGINE
 // ===============================
 
+let structuralChartInstance = null;
+let frequencyChartInstance = null;
+let recencyChartInstance = null;
+
 // ---------- WEIGHTS ----------
 const WEIGHTS = {
   conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15 },
@@ -520,8 +524,9 @@ async function setupDownloadButton() {
 //  INITIALIZE DASHBOARD
 // ===============================
 
-window.addEventListener("DOMContentLoaded", () => {
-  loadAllCharts();
-  setupPredictionButton();
-  setupDownloadButton();
+window.addEventListener("resize", () => {
+  if (structuralChartInstance) structuralChartInstance.resize();
+  if (frequencyChartInstance) frequencyChartInstance.resize();
+  if (recencyChartInstance) recencyChartInstance.resize();
 });
+
