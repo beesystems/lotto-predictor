@@ -231,9 +231,13 @@ select {
 
 /* CHART CONTAINERS */
 .chart-container {
+  position: relative;
   width: 100%;
-  max-height: 320px;
+  max-width: 420px;   /* keeps it inside the card */
+  height: 280px;      /* fixed height for balance */
+  margin: 0 auto;     /* centers it horizontally */
 }
+
 
 canvas {
   width: 100% !important;
