@@ -945,6 +945,26 @@ function setupInfoToggles() {
 }
 
 /* ============================================================
+   JULIAN DATE LABEL UPDATE
+============================================================ */
+
+function updateJulianLabel() {
+  const input = document.getElementById("nextDrawDate");
+  const label = document.getElementById("julianDateValue");
+  if (!input || !label) return;
+
+  input.addEventListener("input", () => {
+    const dateStr = input.value;
+    if (!dateStr) {
+      label.textContent = "—";
+      return;
+    }
+    const julian = getJulianDay(dateStr);
+    label.textContent = julian;
+  });
+}
+
+/* ============================================================
    INITIALIZE DASHBOARD
 ============================================================ */
 
@@ -953,4 +973,5 @@ window.addEventListener("DOMContentLoaded", () => {
   setupPredictionButton();
   setupDownloadButton();
   setupInfoToggles();
+  updateJulianLabel();
 });
