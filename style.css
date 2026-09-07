@@ -110,3 +110,14 @@ body {
   background-color: #4d79ff;
   color: white;
 }
+
+.sets-wrapper {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.set-block {
+  flex: 1;
+  text-align: center;
+}
