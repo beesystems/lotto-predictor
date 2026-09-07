@@ -31,7 +31,7 @@
 
     <main class="content-grid">
 
-      <!-- LEFT COLUMN -->
+      <!-- LEFT COLUMN (ALL CHARTS + PREDICTION CONTROLS) -->
       <section class="column">
 
         <!-- PREDICTION CONTROLS -->
@@ -53,32 +53,13 @@
           <div class="number-badges"></div>
         </section>
 
-        <!-- STRUCTURAL RADAR CHART -->
+        <!-- STRUCTURAL BALANCE CHART -->
         <section class="card">
           <h3>Structural Balance</h3>
           <p class="hint">Visual breakdown of odd/even, low/high, decades, primes, sum, and pairs for the predicted set.</p>
           <div class="chart-container">
             <canvas id="structuralChart"></canvas>
           </div>
-        </section>
-
-      </section>
-
-      <!-- RIGHT COLUMN -->
-      <section class="column">
-
-        <!-- RANKED SETS (3 SETS IN ONE CARD) -->
-        <section id="ranked-sets" class="card"></section>
-
-        <!-- FREQUENCY TABLE -->
-        <section class="card">
-          <h3>Frequency Table</h3>
-          <p class="hint">How often each number has appeared across all historical draws.</p>
-          <div id="frequency-table"></div>
-
-          <button id="downloadCsvBtn" class="primary-btn" style="margin-top: 1rem;">
-           Download Full Draw History (CSV)
-          </button>
         </section>
 
         <!-- FREQUENCY CHART -->
@@ -99,16 +80,36 @@
           </div>
         </section>
 
+        <!-- DISTRIBUTION CHART -->
         <section class="card">
           <h3>Distribution of Draw Sums</h3>
           <p class="hint">Histogram of all draw sums (excluding bonus), with median and cluster markers.</p>
-
           <div class="chart-container">
             <canvas id="distributionChart"></canvas>
           </div>
         </section>
 
       </section>
+
+      <!-- RIGHT COLUMN (SETS + FREQUENCY TABLE) -->
+      <section class="column">
+
+        <!-- RANKED SETS -->
+        <section id="ranked-sets" class="card"></section>
+
+        <!-- FREQUENCY TABLE -->
+        <section class="card">
+          <h3>Frequency Table</h3>
+          <p class="hint">How often each number has appeared across all historical draws.</p>
+          <div id="frequency-table"></div>
+
+          <button id="downloadCsvBtn" class="primary-btn" style="margin-top: 1rem;">
+            Download Full Draw History (CSV)
+          </button>
+        </section>
+
+      </section>
+
     </main>
   </div>
 
