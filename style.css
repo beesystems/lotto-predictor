@@ -233,7 +233,7 @@ select {
 .chart-container {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   height: 280px;
   margin: 0 auto;
 }
