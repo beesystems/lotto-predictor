@@ -27,7 +27,7 @@
 
     <header class="topbar">
       <h1>Random Number Generator</h1>
-      <p>Generate 10 fully random 6-number combinations for your next tickets.</p>
+      <p>Create up to 20 random 6-number combinations for your next tickets.</p>
     </header>
 
     <main class="content-grid">
@@ -35,19 +35,31 @@
       <!-- LEFT COLUMN -->
       <section class="column">
 
+        <!-- Controls -->
         <section class="card">
           <h3>Generate Random Sets</h3>
 
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>This tool generates 10 completely random 6-number combinations (1–49), sorted from smallest to largest. No bonus number is included.</p>
+              <p>This tool generates fully random 6-number combinations (1–49), sorted smallest to largest. You can choose how many sets to generate and optionally avoid “hot” numbers.</p>
             </div>
           </div>
 
-          <button id="generateRandomBtn" class="primary-btn">Generate 10 Random Sets</button>
+          <label for="setCount" style="font-weight:600;">Number of Sets (1–20):</label>
+          <input type="number" id="setCount" min="1" max="20" value="10" style="margin:0.5rem 0; padding:0.4rem; width:80px;">
+
+          <div style="margin:0.75rem 0;">
+            <input type="checkbox" id="avoidHot">
+            <label for="avoidHot" style="font-weight:600;">Avoid Hot Numbers</label>
+          </div>
+
+          <button id="generateRandomBtn" class="primary-btn">Generate Sets</button>
+          <button id="copyBtn" class="primary-btn" style="margin-left:0.5rem;">Copy All Sets</button>
+          <button id="printBtn" class="primary-btn" style="margin-left:0.5rem;">Print Layout</button>
         </section>
 
+        <!-- Results -->
         <section id="random-results" class="card">
           <h3>Your Random Sets</h3>
           <div id="random-list"></div>
@@ -64,21 +76,30 @@
   </div>
 
   <script>
-    function generateRandomSet() {
+    // Hot numbers list (you can update this anytime)
+    const hotNumbers = [31, 23, 37, 19, 29, 17, 11, 14, 22, 33];
+
+    function generateRandomSet(avoidHot) {
       const nums = [];
       while (nums.length < 6) {
         const n = Math.floor(Math.random() * 49) + 1;
-        if (!nums.includes(n)) nums.push(n);
+        if (!nums.includes(n)) {
+          if (avoidHot && hotNumbers.includes(n)) continue;
+          nums.push(n);
+        }
       }
       return nums.sort((a, b) => a - b);
     }
 
     document.getElementById("generateRandomBtn").addEventListener("click", () => {
+      const count = Math.min(20, Math.max(1, parseInt(document.getElementById("setCount").value)));
+      const avoidHot = document.getElementById("avoidHot").checked;
+
       const container = document.getElementById("random-list");
       container.innerHTML = "";
 
-      for (let i = 0; i < 10; i++) {
-        const set = generateRandomSet();
+      for (let i = 0; i < count; i++) {
+        const set = generateRandomSet(avoidHot);
         const div = document.createElement("div");
         div.style.marginBottom = "0.75rem";
         div.style.fontSize = "1.1rem";
@@ -86,6 +107,35 @@
         div.textContent = `Set ${i + 1}: ${set.join(", ")}`;
         container.appendChild(div);
       }
+    });
+
+    // Copy all sets to clipboard
+    document.getElementById("copyBtn").addEventListener("click", () => {
+      const sets = [...document.querySelectorAll("#random-list div")].map(d => d.textContent).join("\n");
+      navigator.clipboard.writeText(sets);
+      alert("All sets copied to clipboard!");
+    });
+
+    // Print-friendly layout
+    document.getElementById("printBtn").addEventListener("click", () => {
+      const sets = [...document.querySelectorAll("#random-list div")].map(d => d.textContent);
+
+      const printWindow = window.open("", "", "width=600,height=800");
+      printWindow.document.write("<html><head><title>Print Ticket Sets</title>");
+      printWindow.document.write("<style>");
+      printWindow.document.write("body { font-family: Segoe UI, sans-serif; padding: 20px; }");
+      printWindow.document.write("h2 { margin-bottom: 1rem; }");
+      printWindow.document.write(".ticket { margin-bottom: 0.75rem; font-size: 1.2rem; font-weight: 600; }");
+      printWindow.document.write("</style></head><body>");
+      printWindow.document.write("<h2>Your Ticket Sets</h2>");
+
+      sets.forEach(s => {
+        printWindow.document.write(`<div class='ticket'>${s}</div>`);
+      });
+
+      printWindow.document.write("</body></html>");
+      printWindow.document.close();
+      printWindow.print();
     });
   </script>
 
