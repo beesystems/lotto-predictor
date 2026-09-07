@@ -94,9 +94,7 @@
       </section>
 
       <!-- RIGHT COLUMN -->
-      <section class="column">
-        <!-- Empty column for balance -->
-      </section>
+      <section class="column"></section>
 
     </main>
   </div>
@@ -109,19 +107,24 @@
        LOAD FREQUENCY FIRST (FIXES ALL-RED BALL ISSUE)
     ============================================================ */
     async function loadFrequency() {
-      const response = await fetch("draws.json");
-      const data = await response.json();
-      const draws = Array.isArray(data.draws) ? data.draws : data;
+      try {
+        const response = await fetch("draws.json");
+        const data = await response.json();
+        const draws = Array.isArray(data.draws) ? data.draws : data;
 
-      const freq = {};
-      for (let i = 1; i <= 49; i++) freq[i] = 0;
+        const freq = {};
+        for (let i = 1; i <= 49; i++) freq[i] = 0;
 
-      draws.forEach(draw => {
-        draw.numbers.forEach(n => freq[n]++);
-      });
+        draws.forEach(draw => {
+          draw.numbers.forEach(n => freq[n]++);
+        });
 
-      frequencyCache = freq;
-      frequencyReady = true;
+        frequencyCache = freq;
+        frequencyReady = true;
+      } catch (err) {
+        console.error("Failed to load frequency:", err);
+        frequencyReady = false;
+      }
     }
 
     window.addEventListener("DOMContentLoaded", loadFrequency);
@@ -136,7 +139,7 @@
       const f = freq[number];
 
       // Prevent "all hot" or "all cold" when freq not loaded
-      if (max === min) return "warm";
+      if (max === 0 || max === min) return "warm";
 
       if (f >= max * 0.75) return "hot";
       if (f <= min * 1.25) return "cold";
@@ -259,7 +262,7 @@
     ============================================================ */
     async function generateSets() {
       if (!frequencyReady) {
-        alert("Loading frequency data… please wait 1–2 seconds.");
+        alert("Loading frequency data… please wait.");
         return;
       }
 
@@ -281,7 +284,7 @@
         let result = null;
         let attempts = 0;
 
-        while (!result && attempts < 5000) {
+        while (!result && attempts < 2000) {
           result = generateRandomSet(options);
           attempts++;
         }
