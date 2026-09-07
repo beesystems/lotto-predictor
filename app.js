@@ -589,6 +589,7 @@ window.addEventListener("resize", () => {
   if (structuralChartInstance) structuralChartInstance.resize();
   if (frequencyChartInstance) frequencyChartInstance.resize();
   if (recencyChartInstance) recencyChartInstance.resize();
+  if (distributionChartInstance) distributionChartInstance.resize();
 });
 
 // ===============================
@@ -612,6 +613,7 @@ async function loadAllCharts() {
   renderFrequencyTable(frequency);
   renderFrequencyChart(frequency);
   buildRecencyChart(draws);
+  buildDistributionChart(draws);
 }
 
 // ===============================
