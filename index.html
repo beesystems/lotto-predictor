@@ -63,6 +63,16 @@
           <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
         </section>
 
+        <label for="temporalMode">Temporal Mode:</label>
+        <select id="temporalMode">
+          <option value="off">Off (default)</option>
+          <option value="julian">Julian Bias Only</option>
+          <option value="hybrid">Hybrid (Model + Julian)</option>
+        </select>
+
+        <label for="nextDrawDate">Next Draw Date:</label>
+        <input type="date" id="nextDrawDate">
+
         <!-- MAIN PREDICTION -->
         <section id="prediction" class="card">
           <h3>Prediction (Most Likely Set)</h3>
