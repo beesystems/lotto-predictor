@@ -218,6 +218,8 @@ function renderFrequencyChart(freq) {
       }]
     },
     options: {
+    responsive: true,
+    maintainAspectRatio: false,
       plugins: {
         legend: {
           labels: {
@@ -269,6 +271,8 @@ function buildRecencyChart(draws) {
       }]
     },
     options: {
+    responsive: true,
+    maintainAspectRatio: false,
       plugins: {
         legend: {
           labels: {
@@ -388,24 +392,24 @@ function buildStructuralChart(prediction) {
       }]
     },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: {
-          font: { size: 13, family: "Segoe UI" }
-        }
-      }
-    },
-    scales: {
-      r: {
-          beginAtZero: true,
-          max: 1,
-          ticks: { stepSize: 0.2 },
-          grid: { color: "rgba(0,0,0,0.05)" }
-        }
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      labels: {
+        font: { size: 13, family: "Segoe UI" }
       }
     }
+  },
+  scales: {
+    r: {
+      beginAtZero: true,
+      max: 1,
+      ticks: { stepSize: 0.2 },
+      grid: { color: "rgba(0,0,0,0.05)" }
+    }
+  }
+}
   });
 }
 
