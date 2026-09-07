@@ -163,6 +163,31 @@
           </div>
         </section>
 
+        <!-- JULIAN TEMPORAL BIAS -->
+        <section class="card">
+          <h3>Julian Temporal Bias</h3>
+          <p class="hint">Correlation strength of each number across all Julian digits.</p>
+          <div class="chart-container">
+            <canvas id="julianChart"></canvas>
+          </div>
+        </section>
+
+        <!-- JULIAN DIGIT HEATMAP -->
+        <section class="card">
+          <h3>Julian Digit Heatmap</h3>
+          <p class="hint">Digit → number correlation matrix.</p>
+          <div class="chart-container">
+            <canvas id="julianHeatmap"></canvas>
+          </div>
+        </section>
+
+        <!-- DIGIT CLUSTER TABLE -->
+        <section class="card">
+          <h3>Digit Cluster Table</h3>
+          <p class="hint">Top correlated numbers for each Julian digit.</p>
+          <div id="digitClusterTable"></div>
+        </section>
+
       </section>
 
       <!-- RIGHT COLUMN -->
@@ -187,31 +212,6 @@
           <button id="downloadCsvBtn" class="primary-btn" style="margin-top: 1rem;">
             Download Full Draw History (CSV)
           </button>
-        </section>
-
-        <!-- JULIAN TEMPORAL BIAS -->
-        <section class="card">
-          <h3>Julian Temporal Bias</h3>
-          <p class="hint">Correlation strength of each number across all Julian digits.</p>
-          <div class="chart-container">
-            <canvas id="julianChart"></canvas>
-          </div>
-        </section>
-
-        <!-- JULIAN DIGIT HEATMAP -->
-        <section class="card">
-          <h3>Julian Digit Heatmap</h3>
-          <p class="hint">Digit → number correlation matrix.</p>
-          <div class="chart-container">
-            <canvas id="julianHeatmap"></canvas>
-          </div>
-        </section>
-
-        <!-- DIGIT CLUSTER TABLE -->
-        <section class="card">
-          <h3>Digit Cluster Table</h3>
-          <p class="hint">Top correlated numbers for each Julian digit.</p>
-          <div id="digitClusterTable"></div>
         </section>
 
       </section>
