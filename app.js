@@ -387,16 +387,18 @@ function buildStructuralChart(prediction) {
         pointBackgroundColor: 'rgba(25, 118, 210, 1)'
       }]
     },
-    options: {
-      plugins: {
-        legend: {
-          labels: {
-            font: { size: 13, family: "Segoe UI" }
-          }
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          font: { size: 13, family: "Segoe UI" }
         }
-      },
-      scales: {
-        r: {
+      }
+    },
+    scales: {
+      r: {
           beginAtZero: true,
           max: 1,
           ticks: { stepSize: 0.2 },
