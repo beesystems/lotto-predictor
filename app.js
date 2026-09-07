@@ -300,8 +300,8 @@ async function setupPredictionButton() {
       badge.textContent = p.number;
       output.appendChild(badge);
     });
+    buildStructuralChart(prediction.map(p => p.number));
   });
-  buildStructuralChart(prediction.map(p => p.number));
 }
 
 // ===============================
