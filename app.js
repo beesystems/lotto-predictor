@@ -273,6 +273,18 @@ function renderRankedSets(scores) {
 
   container.innerHTML = "";
 
+  // Create one card to hold all sets
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const title = document.createElement("h3");
+  title.textContent = "Prediction Sets";
+  card.appendChild(title);
+
+  // Wrapper for the three sets
+  const setsWrapper = document.createElement("div");
+  setsWrapper.className = "sets-wrapper";
+
   for (let setIndex = 0; setIndex < 3; setIndex++) {
     const start = setIndex * 6;
     const end = Math.min(start + 6, scores.length);
@@ -280,12 +292,13 @@ function renderRankedSets(scores) {
 
     if (setNumbers.length < 6) break;
 
-    const card = document.createElement("div");
-    card.className = "card";
+    // Individual set block
+    const setBlock = document.createElement("div");
+    setBlock.className = "set-block";
 
-    const title = document.createElement("h3");
-    title.textContent = `Set ${setIndex + 1}`;
-    card.appendChild(title);
+    const setTitle = document.createElement("h4");
+    setTitle.textContent = `Set ${setIndex + 1}`;
+    setBlock.appendChild(setTitle);
 
     const badgeContainer = document.createElement("div");
     badgeContainer.className = "number-badges";
@@ -301,10 +314,14 @@ function renderRankedSets(scores) {
       badgeContainer.appendChild(badge);
     });
 
-    card.appendChild(badgeContainer);
-    container.appendChild(card);
+    setBlock.appendChild(badgeContainer);
+    setsWrapper.appendChild(setBlock);
   }
+
+  card.appendChild(setsWrapper);
+  container.appendChild(card);
 }
+
 
 // ===============================
 //  STRUCTURAL RADAR CHART
