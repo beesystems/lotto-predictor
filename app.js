@@ -1,612 +1,17 @@
-// ===============================
-//  LOTTO ANALYTICS ENGINE
-// ===============================
+/* ============================================================
+   GLOBAL STATE
+============================================================ */
 
-// ---------- WEIGHTS ----------
-const WEIGHTS = {
-  conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15 },
-  hybrid:       { structure: 0.25, frequency: 0.25, recency: 0.25, pairs: 0.25 },
-  aggressive:   { structure: 0.15, frequency: 0.35, recency: 0.30, pairs: 0.20 }
-};
-
-// ===============================
-//  GLOBAL FREQUENCY CACHE
-// ===============================
-let frequencyCache = {};
-
-// ===============================
-//  CHART INSTANCES (for resizing)
-// ===============================
 let structuralChartInstance = null;
 let frequencyChartInstance = null;
 let recencyChartInstance = null;
-
-// ===============================
-//  STRUCTURAL SCORING
-// ===============================
-
-function structuralOddEven(prediction) {
-  const odd = prediction.filter(n => n % 2 !== 0).length;
-  const even = prediction.length - odd;
-  return 1 - Math.abs(odd - even) / prediction.length;
-}
-
-function structuralLowHigh(prediction) {
-  const low = prediction.filter(n => n <= 24).length;
-  const high = prediction.length - low;
-  return 1 - Math.abs(low - high) / prediction.length;
-}
-
-function structuralDecades(prediction) {
-  const buckets = [0, 0, 0, 0, 0];
-  prediction.forEach(n => buckets[Math.floor(n / 10)]++);
-  const ideal = prediction.length / 5;
-  const deviation = buckets.reduce((sum, b) => sum + Math.abs(b - ideal), 0);
-  return 1 - deviation / prediction.length;
-}
-
-function structuralPrimes(prediction) {
-  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
-  const count = prediction.filter(n => primes.includes(n)).length;
-  const ideal = prediction.length * 0.3;
-  return 1 - Math.abs(count - ideal) / prediction.length;
-}
-
-function structuralSum(prediction) {
-  const sum = prediction.reduce((a,b) => a + b, 0);
-  if (sum < 100 || sum > 180) return 0;
-  return 1 - Math.abs(sum - 140) / 140;
-}
-
-function structuralPairs(prediction) {
-  let pairs = 0;
-  const sorted = [...prediction].sort((a,b) => a - b);
-  for (let i = 1; i < sorted.length; i++) {
-    if (sorted[i] === sorted[i-1] + 1) pairs++;
-  }
-  return 1 - pairs / prediction.length;
-}
-
-function structuralScore(n) {
-  const decade = Math.floor(n / 10);
-  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
-  let score = 0;
-
-  score += (decade >= 0 && decade <= 4) ? 0.25 : 0;
-  score += primes.includes(n) ? 0.25 : 0;
-  score += (n >= 10 && n <= 39) ? 0.25 : 0;
-  score += (n !== 1 && n !== 49) ? 0.25 : 0;
-
-  return score;
-}
-
-// ===============================
-//  FREQUENCY / RECENCY / PAIR SCORING
-// ===============================
-
-function frequencyScore(n, draws) {
-  const count = draws.reduce((sum, d) => sum + (d.numbers.includes(n) ? 1 : 0), 0);
-  return count / draws.length;
-}
-
-function recencyScore(n, draws) {
-  for (let i = draws.length - 1; i >= 0; i--) {
-    if (draws[i].numbers.includes(n)) return 1 - i / draws.length;
-  }
-  return 0;
-}
-
-function pairScore(n, draws) {
-  let score = 0;
-  draws.forEach(d => {
-    const sorted = [...d.numbers].sort((a,b) => a - b);
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i] === sorted[i-1] + 1 && (sorted[i] === n || sorted[i-1] === n)) score++;
-    }
-  });
-  return score / draws.length;
-}
-
-// ===============================
-//  FEATURE COMPUTATION
-// ===============================
-
-function computeFeatures(n, draws) {
-  return {
-    structure: structuralScore(n),
-    frequency: frequencyScore(n, draws),
-    recency: recencyScore(n, draws),
-    pairs: pairScore(n, draws)
-  };
-}
-
-// ===============================
-//  PREDICTION ENGINE
-// ===============================
-
-function generateRankedScores(draws, mode = "hybrid") {
-  const weights = WEIGHTS[mode] || WEIGHTS.hybrid;
-  const numbers = [...Array(49).keys()].map(i => i + 1);
-
-  const scores = numbers.map(n => {
-    const f = computeFeatures(n, draws);
-    const score =
-      weights.structure * f.structure +
-      weights.frequency * f.frequency +
-      weights.recency   * f.recency +
-      weights.pairs     * f.pairs;
-
-    return { number: n, score };
-  });
-
-  return scores.sort((a,b) => b.score - a.score);
-}
-
-// ===============================
-//  STRUCTURAL BREAKDOWN
-// ===============================
-
-function structuralBreakdown(prediction) {
-  return {
-    oddEven: structuralOddEven(prediction),
-    lowHigh: structuralLowHigh(prediction),
-    decades: structuralDecades(prediction),
-    primes: structuralPrimes(prediction),
-    sum: structuralSum(prediction),
-    pairs: structuralPairs(prediction)
-  };
-}
-
-// ===============================
-//  HOT / COLD CLASSIFICATION
-// ===============================
-
-function classifyFrequency(freq, number) {
-  const values = Object.values(freq);
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-
-  const f = freq[number];
-
-  if (f >= max * 0.75) return "hot";
-  if (f <= min * 1.25) return "cold";
-  return "warm";
-}
-
-// ===============================
-//  FREQUENCY TABLE
-// ===============================
-
-function renderFrequencyTable(freq) {
-  const container = document.getElementById("frequency-table");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const table = document.createElement("table");
-  table.className = "freq-table";
-
-  for (let i = 1; i <= 49; i++) {
-    const row = document.createElement("tr");
-    const numCell = document.createElement("td");
-    const freqCell = document.createElement("td");
-
-    numCell.textContent = i;
-    freqCell.textContent = freq[i];
-
-    row.appendChild(numCell);
-    row.appendChild(freqCell);
-    table.appendChild(row);
-  }
-
-  container.appendChild(table);
-}
-
-// ===============================
-//  FREQUENCY CHART
-// ===============================
-
-function renderFrequencyChart(freq) {
-  const canvas = document.getElementById("frequencyChart");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  const labels = Array.from({ length: 49 }, (_, i) => i + 1);
-  const data = labels.map(i => freq[i]);
-
-  frequencyChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Frequency",
-        data,
-        backgroundColor: "rgba(25, 118, 210, 0.6)"
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            font: { size: 13, family: "Segoe UI" }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: "rgba(0,0,0,0.05)" }
-        },
-        x: {
-          grid: { display: false },
-          ticks: {
-            autoSkip: false,      // show every label
-            maxRotation: 90,      // rotate labels if needed
-            minRotation: 45,      // keeps them readable
-            font: { size: 10 }    // smaller font for clarity
-          }
-        }
-      }
-    }
-  });
-}
-
-// ===============================
-//  RECENCY CHART
-// ===============================
-
-function buildRecencyChart(draws) {
-  const canvas = document.getElementById("recencyChart");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  const labels = Array.from({ length: 49 }, (_, i) => i + 1);
-
-  const data = labels.map(n => {
-    for (let i = draws.length - 1; i >= 0; i--) {
-      if (draws[i].numbers.includes(n)) {
-        return draws.length - i;
-      }
-    }
-    return 0;
-  });
-
-  recencyChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Recency (draws since last hit)",
-        data,
-        backgroundColor: "rgba(244, 81, 108, 0.6)"
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            font: { size: 13, family: "Segoe UI" }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: "rgba(0,0,0,0.05)" }
-        },
-        x: {
-          grid: { display: false },
-          ticks: {
-            autoSkip: false,      // show every label
-            maxRotation: 90,      // rotate labels if needed
-            minRotation: 45,      // keeps them readable
-            font: { size: 10 }    // smaller font for clarity
-          }
-        }      
-      }
-    }
-  });
-}
-
-// ===============================
-//  DISTRIBUTION (SUM) HISTOGRAM
-// ===============================
-
 let distributionChartInstance = null;
 
-function buildDistributionChart(draws) {
-  const canvas = document.getElementById("distributionChart");
-  if (!canvas) return;
+let frequencyCache = {};
 
-  const ctx = canvas.getContext("2d");
-
-  // Compute sums (excluding bonus)
-  const sums = draws.map(d => d.numbers.reduce((a, b) => a + b, 0));
-
-  // Compute median
-  const sorted = [...sums].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  const median = sorted.length % 2 !== 0
-    ? sorted[mid]
-    : (sorted[mid - 1] + sorted[mid]) / 2;
-
-  // Auto-bin using Sturges' formula
-  const n = sums.length;
-  const bins = Math.ceil(Math.log2(n) + 1);
-
-  const min = Math.min(...sums);
-  const max = Math.max(...sums);
-  const binWidth = (max - min) / bins;
-
-  const histogram = new Array(bins).fill(0);
-
-  sums.forEach(sum => {
-    let index = Math.floor((sum - min) / binWidth);
-    if (index >= bins) index = bins - 1;
-    histogram[index]++;
-  });
-
-  const labels = histogram.map((_, i) => {
-    const start = Math.round(min + i * binWidth);
-    const end = Math.round(min + (i + 1) * binWidth);
-    return `${start}–${end}`;
-  });
-
-  // Destroy old chart if exists
-  if (distributionChartInstance) distributionChartInstance.destroy();
-
-  distributionChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Sum Distribution",
-          data: histogram,
-          backgroundColor: "rgba(25, 118, 210, 0.25)", // transparent bars
-          borderColor: "rgba(25, 118, 210, 0.8)",
-          borderWidth: 1
-        },
-        // Median line
-        {
-          label: "Median",
-          data: new Array(bins).fill(null).map((_, i) => {
-            const start = min + i * binWidth;
-            const end = min + (i + 1) * binWidth;
-            return median >= start && median < end ? Math.max(...histogram) : null;
-          }),
-          type: "line",
-          borderColor: "#e63946", // red
-          borderWidth: 3,
-          pointRadius: 0
-        },
-        // Left cluster (120)
-        {
-          label: "Cluster 120",
-          data: new Array(bins).fill(null).map((_, i) => {
-            const start = min + i * binWidth;
-            const end = min + (i + 1) * binWidth;
-            return 120 >= start && 120 < end ? Math.max(...histogram) : null;
-          }),
-          type: "line",
-          borderColor: "#1976d2", // blue
-          borderWidth: 3,
-          pointRadius: 0
-        },
-        // Right cluster (160)
-        {
-          label: "Cluster 160",
-          data: new Array(bins).fill(null).map((_, i) => {
-            const start = min + i * binWidth;
-            const end = min + (i + 1) * binWidth;
-            return 160 >= start && 160 < end ? Math.max(...histogram) : null;
-          }),
-          type: "line",
-          borderColor: "#1976d2", // blue
-          borderWidth: 3,
-          pointRadius: 0
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            font: { size: 13, family: "Segoe UI" }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: "rgba(0,0,0,0.05)" }
-        },
-        x: {
-          grid: { display: false }
-        }
-      }
-    }
-  });
-}
-
-// ===============================
-//  RENDER 3 RANKED SETS (ONE CARD)
-// ===============================
-
-function renderRankedSets(scores) {
-  const container = document.getElementById("ranked-sets");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const card = document.createElement("div");
-  card.className = "card";
-
-  const title = document.createElement("h3");
-  title.textContent = "Prediction Sets";
-  card.appendChild(title);
-
-  const hint = document.createElement("p");
-  hint.className = "hint";
-  hint.textContent = "Three ranked sets based on the same scoring model, ordered from strongest to weakest.";
-  card.appendChild(hint);
-
-  const setsWrapper = document.createElement("div");
-  setsWrapper.className = "sets-wrapper";
-
-  for (let setIndex = 0; setIndex < 3; setIndex++) {
-    const start = setIndex * 6;
-    const end = Math.min(start + 6, scores.length);
-    const setNumbers = scores.slice(start, end).map(s => s.number);
-
-    if (setNumbers.length < 6) break;
-
-    const setBlock = document.createElement("div");
-    setBlock.className = "set-block";
-
-    const setTitle = document.createElement("h4");
-    setTitle.textContent = `Set ${setIndex + 1}`;
-    setBlock.appendChild(setTitle);
-
-    const badgeContainer = document.createElement("div");
-    badgeContainer.className = "number-badges";
-
-    setNumbers.forEach(num => {
-      const badge = document.createElement("div");
-      badge.className = "badge";
-
-      const category = classifyFrequency(frequencyCache, num);
-      badge.classList.add(category);
-
-      badge.textContent = num;
-      badgeContainer.appendChild(badge);
-    });
-
-    setBlock.appendChild(badgeContainer);
-    setsWrapper.appendChild(setBlock);
-  }
-
-  card.appendChild(setsWrapper);
-  container.appendChild(card);
-}
-
-// ===============================
-//  STRUCTURAL RADAR CHART
-// ===============================
-
-function buildStructuralChart(prediction) {
-  const canvas = document.getElementById('structuralChart');
-  if (!canvas) return;
-
-  const ctx = canvas.getContext('2d');
-  const breakdown = structuralBreakdown(prediction);
-
-  const labels = ['Odd/Even', 'Low/High', 'Decades', 'Primes', 'Sum', 'Pairs'];
-  const data = [
-    breakdown.oddEven,
-    breakdown.lowHigh,
-    breakdown.decades,
-    breakdown.primes,
-    breakdown.sum,
-    breakdown.pairs
-  ];
-
-  if (structuralChartInstance) structuralChartInstance.destroy();
-
-  structuralChartInstance = new Chart(ctx, {
-    type: 'radar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Structural Balance',
-        data: data,
-        backgroundColor: 'rgba(25, 118, 210, 0.25)',
-        borderColor: 'rgba(25, 118, 210, 0.8)',
-        pointBackgroundColor: 'rgba(25, 118, 210, 1)'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            font: { size: 13, family: "Segoe UI" }
-          }
-        }
-      },
-      scales: {
-        r: {
-          beginAtZero: true,
-          max: 1,
-          ticks: { stepSize: 0.2 },
-          grid: { color: "rgba(0,0,0,0.05)" }
-        }
-      }
-    }
-  });
-}
-
-// ===============================
-//  DOWNLOAD CSV BUTTON
-// ===============================
-
-async function setupDownloadButton() {
-  const btn = document.getElementById("downloadCsvBtn");
-  if (!btn) return;
-
-  btn.addEventListener("click", async () => {
-    const response = await fetch("draws.json");
-    const data = await response.json();
-    const draws = Array.isArray(data.draws) ? data.draws : data;
-
-    let csv = "date,n1,n2,n3,n4,n5,n6,bonus\n";
-
-    draws.forEach(draw => {
-      csv += [
-        draw.date,
-        draw.numbers[0],
-        draw.numbers[1],
-        draw.numbers[2],
-        draw.numbers[3],
-        draw.numbers[4],
-        draw.numbers[5],
-        draw.bonus
-      ].join(",") + "\n";
-    });
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "lotto_draw_history.csv";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  });
-}
-
-// ===============================
-//  UNIVERSAL RESIZE HANDLER
-// ===============================
-
-window.addEventListener("resize", () => {
-  if (structuralChartInstance) structuralChartInstance.resize();
-  if (frequencyChartInstance) frequencyChartInstance.resize();
-  if (recencyChartInstance) recencyChartInstance.resize();
-  if (distributionChartInstance) distributionChartInstance.resize();
-});
-
-// ===============================
-//  LOAD ALL CHARTS
-// ===============================
+/* ============================================================
+   LOAD ALL CHARTS
+============================================================ */
 
 async function loadAllCharts() {
   const response = await fetch('draws.json');
@@ -628,50 +33,283 @@ async function loadAllCharts() {
   buildDistributionChart(draws);
 }
 
-// ===============================
-//  PREDICTION BUTTON
-// ===============================
+/* ============================================================
+   FREQUENCY TABLE
+============================================================ */
 
-function setupPredictionButton() {
-  const btn = document.getElementById("predictBtn");
-  const modeSelect = document.getElementById("mode");
-  const output = document.querySelector("#prediction .number-badges");
+function renderFrequencyTable(freq) {
+  const container = document.getElementById("frequency-table");
+  if (!container) return;
 
-  if (!btn || !modeSelect || !output) return;
+  let html = `<table class="freq-table">`;
 
-  btn.addEventListener("click", async () => {
-    const response = await fetch("draws.json");
-    const data = await response.json();
-    const draws = Array.isArray(data.draws) ? data.draws : data;
+  for (let i = 1; i <= 49; i++) {
+    html += `
+      <tr>
+        <td>${i}</td>
+        <td>${freq[i]}</td>
+      </tr>
+    `;
+  }
 
-    const mode = modeSelect.value;
-    const scores = generateRankedScores(draws, mode);
+  html += `</table>`;
+  container.innerHTML = html;
+}
 
-    const set1 = scores.slice(0, 6).map(s => s.number);
+/* ============================================================
+   FREQUENCY CHART
+============================================================ */
 
-    output.innerHTML = "";
-    set1.forEach(num => {
-      const badge = document.createElement("div");
-      badge.className = "badge";
+function renderFrequencyChart(freq) {
+  const canvas = document.getElementById("frequencyChart");
+  if (!canvas) return;
 
-      const category = classifyFrequency(frequencyCache, num);
-      badge.classList.add(category);
+  const ctx = canvas.getContext("2d");
 
-      badge.textContent = num;
-      output.appendChild(badge);
-    });
+  if (frequencyChartInstance) frequencyChartInstance.destroy();
 
-    buildStructuralChart(set1);
-    renderRankedSets(scores);
+  frequencyChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: Array.from({ length: 49 }, (_, i) => i + 1),
+      datasets: [{
+        label: "Frequency",
+        data: Array.from({ length: 49 }, (_, i) => freq[i + 1]),
+        backgroundColor: "rgba(25, 118, 210, 0.25)",
+        borderColor: "rgba(25, 118, 210, 0.8)",
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            autoSkip: false,
+            maxRotation: 90,
+            minRotation: 45,
+            font: { size: 10 }
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
   });
 }
 
-// ===============================
-//  INITIALIZE DASHBOARD
-// ===============================
+/* ============================================================
+   RECENCY CHART
+============================================================ */
 
-window.addEventListener("DOMContentLoaded", () => {
-  loadAllCharts();
-  setupPredictionButton();
-  setupDownloadButton();
+function buildRecencyChart(draws) {
+  const canvas = document.getElementById("recencyChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  const lastSeen = {};
+  for (let i = 1; i <= 49; i++) lastSeen[i] = null;
+
+  draws.forEach((draw, index) => {
+    draw.numbers.forEach(num => {
+      lastSeen[num] = index;
+    });
+  });
+
+  const recency = [];
+  const totalDraws = draws.length;
+
+  for (let i = 1; i <= 49; i++) {
+    recency.push(lastSeen[i] === null ? totalDraws : totalDraws - lastSeen[i]);
+  }
+
+  if (recencyChartInstance) recencyChartInstance.destroy();
+
+  recencyChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: Array.from({ length: 49 }, (_, i) => i + 1),
+      datasets: [{
+        label: "Recency",
+        data: recency,
+        backgroundColor: "rgba(25, 118, 210, 0.25)",
+        borderColor: "rgba(25, 118, 210, 0.8)",
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            autoSkip: false,
+            maxRotation: 90,
+            minRotation: 45,
+            font: { size: 10 }
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   DISTRIBUTION (BELL CURVE) HISTOGRAM
+============================================================ */
+
+function buildDistributionChart(draws) {
+  const canvas = document.getElementById("distributionChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  // Compute sums (excluding bonus)
+  const sums = draws.map(d => d.numbers.reduce((a, b) => a + b, 0));
+
+  // Compute median
+  const sorted = [...sums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 !== 0
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
+
+  // Bin width = 10
+  const binWidth = 10;
+
+  const min = Math.min(...sums);
+  const max = Math.max(...sums);
+
+  const bins = Math.ceil((max - min) / binWidth);
+
+  const histogram = new Array(bins).fill(0);
+
+  sums.forEach(sum => {
+    let index = Math.floor((sum - min) / binWidth);
+    if (index >= bins) index = bins - 1;
+    histogram[index]++;
+  });
+
+  // Compute bin centers
+  const binCenters = histogram.map((_, i) => min + i * binWidth + binWidth / 2);
+
+  // Prepare dataset with numeric x-values
+  const histogramData = histogram.map((count, i) => ({
+    x: binCenters[i],
+    y: count
+  }));
+
+  if (distributionChartInstance) distributionChartInstance.destroy();
+
+  distributionChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      datasets: [
+        {
+          label: "Sum Distribution",
+          data: histogramData,
+          backgroundColor: "rgba(25, 118, 210, 0.25)",
+          borderColor: "rgba(25, 118, 210, 0.8)",
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      parsing: false,
+      scales: {
+        x: {
+          type: "linear",
+          min: min,
+          max: max,
+          ticks: {
+            stepSize: binWidth,
+            font: { size: 10 }
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            font: { size: 13, family: "Segoe UI" }
+          }
+        },
+        annotation: {
+          annotations: {
+            medianLine: {
+              type: 'line',
+              scaleID: 'x',
+              value: median,
+              borderColor: '#e63946',
+              borderWidth: 3,
+              label: {
+                enabled: true,
+                content: `Median (${median})`,
+                position: 'start',
+                backgroundColor: 'rgba(230,57,70,0.8)',
+                color: '#fff'
+              }
+            },
+            leftCluster: {
+              type: 'line',
+              scaleID: 'x',
+              value: 120,
+              borderColor: '#1976d2',
+              borderWidth: 3,
+              label: {
+                enabled: true,
+                content: '120',
+                position: 'start',
+                backgroundColor: 'rgba(25,118,210,0.8)',
+                color: '#fff'
+              }
+            },
+            rightCluster: {
+              type: 'line',
+              scaleID: 'x',
+              value: 160,
+              borderColor: '#1976d2',
+              borderWidth: 3,
+              label: {
+                enabled: true,
+                content: '160',
+                position: 'start',
+                backgroundColor: 'rgba(25,118,210,0.8)',
+                color: '#fff'
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   RESIZE LISTENER
+============================================================ */
+
+window.addEventListener("resize", () => {
+  if (structuralChartInstance) structuralChartInstance.resize();
+  if (frequencyChartInstance) frequencyChartInstance.resize();
+  if (recencyChartInstance) recencyChartInstance.resize();
+  if (distributionChartInstance) distributionChartInstance.resize();
 });
+
+/* ============================================================
+   INITIAL LOAD
+============================================================ */
+
+loadAllCharts();
