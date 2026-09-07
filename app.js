@@ -469,6 +469,48 @@ function setupPredictionButton() {
 }
 
 // ===============================
+//  DOWNLOAD CSV BUTTON
+// ===============================
+
+async function setupDownloadButton() {
+  const btn = document.getElementById("downloadCsvBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const response = await fetch("draws.json");
+    const data = await response.json();
+    const draws = Array.isArray(data.draws) ? data.draws : data;
+
+    // Convert draws to CSV
+    let csv = "date,n1,n2,n3,n4,n5,n6,bonus\n";
+
+    draws.forEach(draw => {
+      csv += [
+        draw.date,
+        draw.numbers[0],
+        draw.numbers[1],
+        draw.numbers[2],
+        draw.numbers[3],
+        draw.numbers[4],
+        draw.numbers[5],
+        draw.bonus
+      ].join(",") + "\n";
+    });
+
+    // Trigger download
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lotto_draw_history.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  });
+}
+
+// ===============================
 //  INITIALIZE DASHBOARD
 // ===============================
 
