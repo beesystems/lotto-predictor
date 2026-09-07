@@ -303,4 +303,12 @@ async function setupPredictionButton() {
   });
 }
 
-setupPredictionButton();
+// ===============================
+//  INITIALIZE DASHBOARD
+// ===============================
+
+window.addEventListener("DOMContentLoaded", () => {
+  loadAllCharts();
+  setupPredictionButton();
+});
+
