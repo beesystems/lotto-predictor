@@ -2,10 +2,6 @@
 //  LOTTO ANALYTICS ENGINE
 // ===============================
 
-let structuralChartInstance = null;
-let frequencyChartInstance = null;
-let recencyChartInstance = null;
-
 // ---------- WEIGHTS ----------
 const WEIGHTS = {
   conservative: { structure: 0.35, frequency: 0.30, recency: 0.20, pairs: 0.15 },
@@ -17,6 +13,13 @@ const WEIGHTS = {
 //  GLOBAL FREQUENCY CACHE
 // ===============================
 let frequencyCache = {};
+
+// ===============================
+//  CHART INSTANCES (for resizing)
+// ===============================
+let structuralChartInstance = null;
+let frequencyChartInstance = null;
+let recencyChartInstance = null;
 
 // ===============================
 //  STRUCTURAL SCORING
@@ -211,7 +214,7 @@ function renderFrequencyChart(freq) {
   const labels = Array.from({ length: 49 }, (_, i) => i + 1);
   const data = labels.map(i => freq[i]);
 
-  new Chart(ctx, {
+  frequencyChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
@@ -222,8 +225,8 @@ function renderFrequencyChart(freq) {
       }]
     },
     options: {
-    responsive: true,
-    maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           labels: {
@@ -264,7 +267,7 @@ function buildRecencyChart(draws) {
     return 0;
   });
 
-  new Chart(ctx, {
+  recencyChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
@@ -275,8 +278,8 @@ function buildRecencyChart(draws) {
       }]
     },
     options: {
-    responsive: true,
-    maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           labels: {
@@ -362,8 +365,6 @@ function renderRankedSets(scores) {
 //  STRUCTURAL RADAR CHART
 // ===============================
 
-let structuralChartInstance = null;
-
 function buildStructuralChart(prediction) {
   const canvas = document.getElementById('structuralChart');
   if (!canvas) return;
@@ -395,27 +396,77 @@ function buildStructuralChart(prediction) {
         pointBackgroundColor: 'rgba(25, 118, 210, 1)'
       }]
     },
-  options: {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      labels: {
-        font: { size: 13, family: "Segoe UI" }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            font: { size: 13, family: "Segoe UI" }
+          }
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 1,
+          ticks: { stepSize: 0.2 },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        }
       }
     }
-  },
-  scales: {
-    r: {
-      beginAtZero: true,
-      max: 1,
-      ticks: { stepSize: 0.2 },
-      grid: { color: "rgba(0,0,0,0.05)" }
-    }
-  }
-}
   });
 }
+
+// ===============================
+//  DOWNLOAD CSV BUTTON
+// ===============================
+
+async function setupDownloadButton() {
+  const btn = document.getElementById("downloadCsvBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const response = await fetch("draws.json");
+    const data = await response.json();
+    const draws = Array.isArray(data.draws) ? data.draws : data;
+
+    let csv = "date,n1,n2,n3,n4,n5,n6,bonus\n";
+
+    draws.forEach(draw => {
+      csv += [
+        draw.date,
+        draw.numbers[0],
+        draw.numbers[1],
+        draw.numbers[2],
+        draw.numbers[3],
+        draw.numbers[4],
+        draw.numbers[5],
+        draw.bonus
+      ].join(",") + "\n";
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lotto_draw_history.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  });
+}
+
+// ===============================
+//  UNIVERSAL RESIZE HANDLER
+// ===============================
+
+window.addEventListener("resize", () => {
+  if (structuralChartInstance) structuralChartInstance.resize();
+  if (frequencyChartInstance) frequencyChartInstance.resize();
+  if (recencyChartInstance) recencyChartInstance.resize();
+});
 
 // ===============================
 //  LOAD ALL CHARTS
@@ -479,54 +530,11 @@ function setupPredictionButton() {
 }
 
 // ===============================
-//  DOWNLOAD CSV BUTTON
-// ===============================
-
-async function setupDownloadButton() {
-  const btn = document.getElementById("downloadCsvBtn");
-  if (!btn) return;
-
-  btn.addEventListener("click", async () => {
-    const response = await fetch("draws.json");
-    const data = await response.json();
-    const draws = Array.isArray(data.draws) ? data.draws : data;
-
-    // Convert draws to CSV
-    let csv = "date,n1,n2,n3,n4,n5,n6,bonus\n";
-
-    draws.forEach(draw => {
-      csv += [
-        draw.date,
-        draw.numbers[0],
-        draw.numbers[1],
-        draw.numbers[2],
-        draw.numbers[3],
-        draw.numbers[4],
-        draw.numbers[5],
-        draw.bonus
-      ].join(",") + "\n";
-    });
-
-    // Trigger download
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "lotto_draw_history.csv";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  });
-}
-
-// ===============================
 //  INITIALIZE DASHBOARD
 // ===============================
 
-window.addEventListener("resize", () => {
-  if (structuralChartInstance) structuralChartInstance.resize();
-  if (frequencyChartInstance) frequencyChartInstance.resize();
-  if (recencyChartInstance) recencyChartInstance.resize();
+window.addEventListener("DOMContentLoaded", () => {
+  loadAllCharts();
+  setupPredictionButton();
+  setupDownloadButton();
 });
-
