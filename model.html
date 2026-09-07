@@ -3,54 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prediction Model</title>
-  <link rel="icon" type="image/png" href="favicon.png">
+  <title>Prediction Model Overview</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <h2>Lotto Predictor</h2>
-  </div>
-  <nav class="sidebar-nav">
-    <a href="index.html">Dashboard</a>
-    <a href="model.html" class="active">Model</a>
-    <a href="random.html">Random Sets</a>
-    <a href="donate.html">Donate</a>
-  </nav>
-</aside>
 
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Lotto Predictor</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Dashboard</a>
+      <a href="model.html" class="active">Model</a>
+      <a href="donate.html">Donate</a>
+      <a href="random.html">Random Sets</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
   <div class="main-layout">
+
     <header class="topbar">
       <h1>Prediction Model</h1>
       <p>How the engine scores and ranks numbers.</p>
     </header>
 
     <main class="content-grid">
+
+      <!-- LEFT COLUMN -->
       <section class="column">
+
+        <!-- MODEL OVERVIEW -->
         <section class="card">
           <h3>Model Overview</h3>
-          <p>This site uses a weighted model combining:</p>
-          <ul>
-            <li><strong>Structural patterns:</strong> odd/even, low/high, decades, primes, sum range, consecutive pairs</li>
-            <li><strong>Frequency:</strong> long-term hot/cold behaviour</li>
-            <li><strong>Recency:</strong> last N draws, streaks</li>
-            <li><strong>Pair clustering:</strong> numbers that often appear together</li>
+          <p class="hint">
+            This site uses a weighted analytics engine to evaluate all 49 numbers using structural balance, long‑term frequency, recency momentum, and pair clustering.
+          </p>
+
+          <p>The prediction engine assigns each number a score based on four major components:</p>
+
+          <ul style="margin-top:1rem; margin-bottom:1rem; line-height:1.5;">
+            <li><strong>Structural Patterns:</strong> odd/even balance, low/high distribution, decade spread, prime count, sum range, and consecutive pairs.</li>
+            <li><strong>Frequency:</strong> long‑term hot/cold behaviour based on historical draw counts.</li>
+            <li><strong>Recency:</strong> momentum from recent draws and streak behaviour.</li>
+            <li><strong>Pair Clustering:</strong> numbers that frequently appear together or form consecutive pairs.</li>
           </ul>
-          <p>Modes adjust the weights:</p>
-          <ul>
-            <li><strong>Conservative:</strong> structure-focused</li>
-            <li><strong>Hybrid:</strong> balanced structure + momentum</li>
-            <li><strong>Aggressive:</strong> momentum-focused</li>
+
+          <p>Each number receives a weighted score based on the selected mode:</p>
+
+          <ul style="margin-top:1rem; line-height:1.5;">
+            <li><strong>Conservative:</strong> structure‑focused, favouring balanced numbers.</li>
+            <li><strong>Hybrid:</strong> balanced structure + momentum.</li>
+            <li><strong>Aggressive:</strong> momentum‑focused, favouring hot and recent numbers.</li>
+          </ul>
+
+          <p style="margin-top:1rem;">
+            The top‑ranked numbers form the prediction sets shown on the dashboard.
+          </p>
+        </section>
+
+        <!-- WEIGHT TABLE -->
+        <section class="card">
+          <h3>Model Weights</h3>
+          <p class="hint">How each mode adjusts the scoring emphasis.</p>
+
+          <table class="freq-table" style="margin-top:1rem;">
+            <tr>
+              <td><strong>Mode</strong></td>
+              <td><strong>Structure</strong></td>
+              <td><strong>Frequency</strong></td>
+              <td><strong>Recency</strong></td>
+              <td><strong>Pairs</strong></td>
+            </tr>
+            <tr>
+              <td>Conservative</td>
+              <td>0.35</td>
+              <td>0.30</td>
+              <td>0.20</td>
+              <td>0.15</td>
+            </tr>
+            <tr>
+              <td>Hybrid</td>
+              <td>0.25</td>
+              <td>0.25</td>
+              <td>0.25</td>
+              <td>0.25</td>
+            </tr>
+            <tr>
+              <td>Aggressive</td>
+              <td>0.15</td>
+              <td>0.35</td>
+              <td>0.30</td>
+              <td>0.20</td>
+            </tr>
+          </table>
+        </section>
+
+        <!-- STRUCTURAL DETAILS -->
+        <section class="card">
+          <h3>Structural Patterns</h3>
+          <p class="hint">How structural balance is measured.</p>
+
+          <ul style="margin-top:1rem; line-height:1.5;">
+            <li><strong>Odd/Even:</strong> Balanced sets score higher.</li>
+            <li><strong>Low/High:</strong> Even distribution across 1–24 and 25–49.</li>
+            <li><strong>Decades:</strong> Spread across 0–9, 10–19, 20–29, 30–39, 40–49.</li>
+            <li><strong>Primes:</strong> Ideal prime count is ~30% of the set.</li>
+            <li><strong>Sum Range:</strong> Ideal sum is around 140, with acceptable range 100–180.</li>
+            <li><strong>Consecutive Pairs:</strong> Fewer consecutive numbers score higher.</li>
           </ul>
         </section>
+
       </section>
 
+      <!-- RIGHT COLUMN -->
       <section class="column">
-        <!-- Empty right column for visual balance -->
+
+        <!-- FREQUENCY CHART -->
+        <section class="card">
+          <h3>Frequency Chart</h3>
+          <p class="hint">Long‑term frequency of each number.</p>
+          <div class="chart-container">
+            <canvas id="frequencyChart"></canvas>
+          </div>
+        </section>
+
+        <!-- RECENCY CHART -->
+        <section class="card">
+          <h3>Recency Chart</h3>
+          <p class="hint">Draws since each number last appeared.</p>
+          <div class="chart-container">
+            <canvas id="recencyChart"></canvas>
+          </div>
+        </section>
+
       </section>
+
     </main>
   </div>
+
+  <script src="app.js"></script>
 
 </body>
 </html>
