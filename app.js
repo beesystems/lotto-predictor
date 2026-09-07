@@ -685,6 +685,20 @@ function setupPredictionButton() {
 }
 
 /* ============================================================
+   INFO TIP COLLAPSIBLE TOGGLES
+============================================================ */
+
+function setupInfoToggles() {
+  document.querySelectorAll(".info-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const content = btn.nextElementSibling;
+      const isOpen = content.style.display === "block";
+      content.style.display = isOpen ? "none" : "block";
+    });
+  });
+}
+
+/* ============================================================
    INITIALIZE DASHBOARD
 ============================================================ */
 
@@ -692,4 +706,5 @@ window.addEventListener("DOMContentLoaded", () => {
   loadAllCharts();
   setupPredictionButton();
   setupDownloadButton();
+  setupInfoToggles();
 });
