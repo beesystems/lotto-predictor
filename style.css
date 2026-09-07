@@ -238,10 +238,15 @@ select {
   margin: 0 auto;     /* centers it horizontally */
 }
 
-
 canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+#structuralChart {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
 /* RESPONSIVE */
