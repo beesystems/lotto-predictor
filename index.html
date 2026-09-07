@@ -3,63 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lotto Predictor</title>
-
-  <!-- Add your favicon here -->
-  <link rel="icon" type="image/png" href="favicon.png">
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Lotto Predictor Dashboard</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
+  <!-- NAVBAR -->
   <nav class="navbar">
-    <a href="index.html">Dashboard</a>
+    <a href="index.html" class="active">Dashboard</a>
     <a href="model.html">Model</a>
     <a href="donate.html">Donate</a>
   </nav>
 
   <main class="grid">
-    <section class="column">
-      <div class="card">
-        <h3>Prediction Mode</h3>
-        <select id="mode">
-          <option value="conservative">Conservative</option>
-          <option value="hybrid" selected>Hybrid</option>
-          <option value="aggressive">Aggressive</option>
-        </select>
-        <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
-      </div>
+
+    <!-- PREDICTION CONTROLS -->
+    <section class="card">
+      <h3>Prediction Mode</h3>
+      <select id="mode">
+        <option value="hybrid">Hybrid (Balanced)</option>
+        <option value="conservative">Conservative (Stable)</option>
+        <option value="aggressive">Aggressive (Hot/Recent)</option>
+      </select>
+      <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
     </section>
 
-    <section class="column">
-      <div class="card" id="prediction">
-        <h3>Predicted Numbers</h3>
-        <div class="number-badges"></div>
-      </div>
-
-      <div class="card">
-        <h3>Frequency</h3>
-        <canvas id="frequencyChart"></canvas>
-      </div>
-
-      <div class="card">
-        <h3>Frequency Table</h3>
-        <div id="frequency-table"></div>
-      </div>
-
-      <div class="card">
-        <h3>Recency (Last 20 Draws)</h3>
-        <canvas id="recencyChart"></canvas>
-      </div>
-
-      <div class="card">
-        <h3>Structural Score</h3>
-        <canvas id="structuralChart"></canvas>
-      </div>
+    <!-- MAIN PREDICTION (SET 1 ONLY) -->
+    <section id="prediction" class="card">
+      <h3>Prediction (Most Likely Set)</h3>
+      <div class="number-badges"></div>
     </section>
+
+    <!-- STRUCTURAL RADAR CHART -->
+    <section class="card">
+      <h3>Structural Balance</h3>
+      <canvas id="structuralChart"></canvas>
+    </section>
+
+    <!-- RANKED SETS (SETS 2–10) -->
+    <section id="ranked-sets" class="grid"></section>
+
+    <!-- FREQUENCY TABLE -->
+    <section class="card">
+      <h3>Frequency Table</h3>
+      <div id="frequency-table"></div>
+    </section>
+
+    <!-- FREQUENCY CHART -->
+    <section class="card">
+      <h3>Frequency Chart</h3>
+      <canvas id="frequencyChart"></canvas>
+    </section>
+
+    <!-- RECENCY CHART -->
+    <section class="card">
+      <h3>Recency Chart</h3>
+      <canvas id="recencyChart"></canvas>
+    </section>
+
   </main>
-  
+
   <script src="app.js"></script>
+
 </body>
 </html>
