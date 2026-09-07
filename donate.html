@@ -2,26 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Donate</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <nav class="navbar">
     <a href="index.html">Dashboard</a>
-    <a href="add-draw.html">Add Draw</a>
     <a href="model.html">Model</a>
-    <a href="donate.html">Donate</a>
+    <a href="donate.html" class="active">Donate</a>
   </nav>
 
-  <main class="single">
-    <div class="card donate-card">
-      <h3>Support the Project</h3>
-      <p>Your contributions help keep this tool online.</p>
-      <form action="https://www.paypal.com/donate" method="post" target="_blank">
-        <input type="hidden" name="hosted_button_id" value="YOUR_BUTTON_ID">
-        <button type="submit" class="primary-btn">Donate via PayPal</button>
-      </form>
-    </div>
+  <main class="grid">
+    <section class="column">
+      <div class="card">
+        <h3>Support the Project</h3>
+        <p>If you enjoy this Lotto Predictor and want to support future development, you can donate securely using PayPal.</p>
+
+        <a href="https://www.paypal.me/cagaiby" target="_blank" class="primary-btn">
+          Donate via PayPal
+        </a>
+      </div>
+    </section>
   </main>
+
 </body>
 </html>
