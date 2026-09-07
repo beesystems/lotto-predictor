@@ -267,4 +267,40 @@ async function loadAllCharts() {
   buildRecencyChart(draws);
 }
 
-loadAllCharts
+loadAllCharts();
+
+
+// ===============================
+//  PREDICTION BUTTON
+// ===============================
+
+async function setupPredictionButton() {
+  const btn = document.getElementById("predictBtn");
+  const modeSelect = document.getElementById("mode");
+  const output = document.querySelector("#prediction .number-badges");
+
+  btn.addEventListener("click", async () => {
+    const response = await fetch("draws.json");
+    const data = await response.json();
+    const draws = Array.isArray(data.draws) ? data.draws : data;
+
+    if (!Array.isArray(draws)) {
+      console.error("Invalid draws.json format");
+      output.innerHTML = "<p style='color:red'>Error: No draws found.</p>";
+      return;
+    }
+
+    const mode = modeSelect.value;
+    const prediction = generatePrediction(draws, mode);
+
+    output.innerHTML = "";
+    prediction.forEach(p => {
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = p.number;
+      output.appendChild(badge);
+    });
+  });
+}
+
+setupPredictionButton();
