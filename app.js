@@ -167,17 +167,121 @@ function classifyFrequency(freq, number) {
 }
 
 // ===============================
+//  FREQUENCY TABLE
+// ===============================
+
+function renderFrequencyTable(freq) {
+  const container = document.getElementById("frequency-table");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const table = document.createElement("table");
+  table.className = "freq-table";
+
+  for (let i = 1; i <= 49; i++) {
+    const row = document.createElement("tr");
+    const numCell = document.createElement("td");
+    const freqCell = document.createElement("td");
+
+    numCell.textContent = i;
+    freqCell.textContent = freq[i];
+
+    row.appendChild(numCell);
+    row.appendChild(freqCell);
+    table.appendChild(row);
+  }
+
+  container.appendChild(table);
+}
+
+// ===============================
+//  FREQUENCY CHART
+// ===============================
+
+function renderFrequencyChart(freq) {
+  const canvas = document.getElementById("frequencyChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const labels = Array.from({ length: 49 }, (_, i) => i + 1);
+  const data = labels.map(i => freq[i]);
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Frequency",
+        data,
+        backgroundColor: "rgba(0, 99, 255, 0.5)"
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ===============================
+//  RECENCY CHART
+// ===============================
+
+function buildRecencyChart(draws) {
+  const canvas = document.getElementById("recencyChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const labels = Array.from({ length: 49 }, (_, i) => i + 1);
+
+  const data = labels.map(n => {
+    for (let i = draws.length - 1; i >= 0; i--) {
+      if (draws[i].numbers.includes(n)) {
+        // number of draws since last hit
+        return draws.length - i;
+      }
+    }
+    return 0;
+  });
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Recency (draws since last hit)",
+        data,
+        backgroundColor: "rgba(255, 99, 132, 0.5)"
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ===============================
 //  RENDER RANKED SETS (2–10)
 // ===============================
 
 function renderRankedSets(scores) {
   const container = document.getElementById("ranked-sets");
+  if (!container) return;
+
   container.innerHTML = "";
 
+  // We already used scores[0..5] for Set 1
+  // Now render Sets 2–10, but stop if we run out of numbers
   for (let setIndex = 1; setIndex < 10; setIndex++) {
     const start = setIndex * 6;
-    const end = start + 6;
+    const end = Math.min(start + 6, scores.length);
     const setNumbers = scores.slice(start, end).map(s => s.number);
+
+    if (setNumbers.length === 0) break;
 
     const card = document.createElement("div");
     card.className = "card";
@@ -212,7 +316,10 @@ function renderRankedSets(scores) {
 let structuralChartInstance = null;
 
 function buildStructuralChart(prediction) {
-  const ctx = document.getElementById('structuralChart').getContext('2d');
+  const canvas = document.getElementById('structuralChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
   const breakdown = structuralBreakdown(prediction);
 
   const labels = ['Odd/Even', 'Low/High', 'Decades', 'Primes', 'Sum', 'Pairs'];
@@ -282,6 +389,8 @@ function setupPredictionButton() {
   const btn = document.getElementById("predictBtn");
   const modeSelect = document.getElementById("mode");
   const output = document.querySelector("#prediction .number-badges");
+
+  if (!btn || !modeSelect || !output) return;
 
   btn.addEventListener("click", async () => {
     const response = await fetch("draws.json");
