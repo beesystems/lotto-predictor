@@ -8,22 +8,39 @@
 </head>
 <body>
 
-  <nav class="navbar">
-    <a href="index.html">Dashboard</a>
-    <a href="model.html">Model</a>
-    <a href="donate.html" class="active">Donate</a>
-  </nav>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Lotto Predictor</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Dashboard</a>
+      <a href="model.html">Model</a>
+      <a href="donate.html" class="active">Donate</a>
+    </nav>
+  </aside>
 
-  <main class="donate-container">
-    <section class="card donate-card">
-      <h3>Support the Project</h3>
-      <p>If you enjoy using the Lotto Predictor and want to support future development, you can donate securely using PayPal.</p>
+  <div class="main-layout">
+    <header class="topbar">
+      <h1>Support the Project</h1>
+      <p>Help keep the Lotto Predictor evolving.</p>
+    </header>
 
-      <a href="https://www.paypal.me/YOURPAYPALNAME" target="_blank" class="primary-btn donate-btn">
-        Donate via PayPal
-      </a>
-    </section>
-  </main>
+    <main class="content-grid">
+      <section class="column">
+        <section class="card donate-card">
+          <h3>Support the Project</h3>
+          <p>If you enjoy using the Lotto Predictor and want to support future development, you can donate securely using PayPal.</p>
+          <a href="https://www.paypal.me/YOURPAYPALNAME" target="_blank" class="primary-btn donate-btn">
+            Donate via PayPal
+          </a>
+        </section>
+      </section>
+
+      <section class="column">
+        <!-- Empty right column for balance -->
+      </section>
+    </main>
+  </div>
 
 </body>
 </html>
