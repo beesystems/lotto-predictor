@@ -18,17 +18,17 @@
 <body>
 
   <!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <h2>Lotto Predictor</h2>
-  </div>
-  <nav class="sidebar-nav">
-    <a href="index.html" class="active">Dashboard</a>
-    <a href="model.html">Model</a>
-    <a href="random.html">Random Sets</a>
-    <a href="donate.html">Donate</a>
-  </nav>
-</aside>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Lotto Predictor</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="model.html">Model</a>
+      <a href="random.html">Random Sets</a>
+      <a href="donate.html">Donate</a>
+    </nav>
+  </aside>
 
   <!-- MAIN CONTENT -->
   <div class="main-layout">
@@ -63,15 +63,27 @@
           <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
         </section>
 
-        <label for="temporalMode">Temporal Mode:</label>
-        <select id="temporalMode">
-          <option value="off">Off (default)</option>
-          <option value="julian">Julian Bias Only</option>
-          <option value="hybrid">Hybrid (Model + Julian)</option>
-        </select>
+        <!-- TEMPORAL MODE -->
+        <section class="card">
+          <h3>Temporal Mode</h3>
 
-        <label for="nextDrawDate">Next Draw Date:</label>
-        <input type="date" id="nextDrawDate">
+          <div class="info-toggle">
+            <button class="info-btn">Info</button>
+            <div class="info-content">
+              <p>Use Julian date correlations to enhance predictions based on the next draw date.</p>
+            </div>
+          </div>
+
+          <label for="temporalMode">Temporal Mode:</label>
+          <select id="temporalMode">
+            <option value="off">Off (default)</option>
+            <option value="julian">Julian Bias Only</option>
+            <option value="hybrid">Hybrid (Model + Julian)</option>
+          </select>
+
+          <label for="nextDrawDate">Next Draw Date:</label>
+          <input type="date" id="nextDrawDate">
+        </section>
 
         <!-- MAIN PREDICTION -->
         <section id="prediction" class="card">
@@ -80,7 +92,7 @@
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>Your top-ranked 6-number set based on structural balance, frequency, recency, and pair scoring. Numbers are sorted from smallest to largest.</p>
+              <p>Your top-ranked 6-number set based on structural balance, frequency, recency, pairs, and temporal bias.</p>
             </div>
           </div>
 
@@ -94,7 +106,7 @@
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>Shows how well the predicted set aligns with typical structural patterns found in past winning draws, including odd/even, low/high, decades, primes, sum range, and consecutive pairs.</p>
+              <p>Shows how well the predicted set aligns with typical structural patterns found in past winning draws.</p>
             </div>
           </div>
 
@@ -110,7 +122,7 @@
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>Displays how often each number has appeared historically. Higher bars indicate numbers drawn more frequently over time.</p>
+              <p>Displays how often each number has appeared historically.</p>
             </div>
           </div>
 
@@ -126,7 +138,7 @@
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>Shows how many draws have passed since each number last appeared. Taller bars represent numbers that have not shown up recently.</p>
+              <p>Shows how many draws have passed since each number last appeared.</p>
             </div>
           </div>
 
@@ -142,7 +154,7 @@
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>A histogram of the total sum of each draw. The median and cluster lines (120 and 160) help visualize where most draw sums tend to fall.</p>
+              <p>A histogram of the total sum of each draw.</p>
             </div>
           </div>
 
@@ -175,6 +187,31 @@
           <button id="downloadCsvBtn" class="primary-btn" style="margin-top: 1rem;">
             Download Full Draw History (CSV)
           </button>
+        </section>
+
+        <!-- JULIAN TEMPORAL BIAS -->
+        <section class="card">
+          <h3>Julian Temporal Bias</h3>
+          <p class="hint">Correlation strength of each number across all Julian digits.</p>
+          <div class="chart-container">
+            <canvas id="julianChart"></canvas>
+          </div>
+        </section>
+
+        <!-- JULIAN DIGIT HEATMAP -->
+        <section class="card">
+          <h3>Julian Digit Heatmap</h3>
+          <p class="hint">Digit → number correlation matrix.</p>
+          <div class="chart-container">
+            <canvas id="julianHeatmap"></canvas>
+          </div>
+        </section>
+
+        <!-- DIGIT CLUSTER TABLE -->
+        <section class="card">
+          <h3>Digit Cluster Table</h3>
+          <p class="hint">Top correlated numbers for each Julian digit.</p>
+          <div id="digitClusterTable"></div>
         </section>
 
       </section>
