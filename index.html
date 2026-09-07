@@ -4,8 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lotto Predictor Dashboard</title>
+
   <link rel="stylesheet" href="style.css">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Chart.js Annotation Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 </head>
 
 <body>
@@ -24,6 +30,7 @@
 
   <!-- MAIN CONTENT -->
   <div class="main-layout">
+
     <header class="topbar">
       <h1>Dashboard</h1>
       <p>Analyze historical draws and generate structured predictions.</p>
@@ -38,15 +45,17 @@
         <section class="card">
           <h3>Prediction Mode</h3>
           <p class="hint">Choose how the model balances structure, frequency, and recency.</p>
+
           <select id="mode">
             <option value="hybrid">Hybrid (Balanced)</option>
             <option value="conservative">Conservative (Stable)</option>
             <option value="aggressive">Aggressive (Hot/Recent)</option>
           </select>
+
           <button id="predictBtn" class="primary-btn">Predict Next Draw</button>
         </section>
 
-        <!-- MAIN PREDICTION (SET 1 ONLY) -->
+        <!-- MAIN PREDICTION -->
         <section id="prediction" class="card">
           <h3>Prediction (Most Likely Set)</h3>
           <p class="hint">This set represents the highest‑scoring combination based on your selected mode.</p>
@@ -56,7 +65,7 @@
         <!-- STRUCTURAL BALANCE CHART -->
         <section class="card">
           <h3>Structural Balance</h3>
-          <p class="hint">Visual breakdown of odd/even, low/high, decades, primes, sum, and pairs for the predicted set.</p>
+          <p class="hint">Breakdown of odd/even, low/high, decades, primes, sum, and pairs.</p>
           <div class="chart-container">
             <canvas id="structuralChart"></canvas>
           </div>
@@ -65,7 +74,7 @@
         <!-- FREQUENCY CHART -->
         <section class="card">
           <h3>Frequency Chart</h3>
-          <p class="hint">Bar chart showing the distribution of hits for numbers 1–49.</p>
+          <p class="hint">How often each number has appeared across all draws.</p>
           <div class="chart-container">
             <canvas id="frequencyChart"></canvas>
           </div>
@@ -83,7 +92,7 @@
         <!-- DISTRIBUTION CHART -->
         <section class="card">
           <h3>Distribution of Draw Sums</h3>
-          <p class="hint">Histogram of all draw sums (excluding bonus), with median and cluster markers.</p>
+          <p class="hint">Histogram of draw sums (excluding bonus), with median and cluster markers.</p>
           <div class="chart-container">
             <canvas id="distributionChart"></canvas>
           </div>
@@ -101,6 +110,7 @@
         <section class="card">
           <h3>Frequency Table</h3>
           <p class="hint">How often each number has appeared across all historical draws.</p>
+
           <div id="frequency-table"></div>
 
           <button id="downloadCsvBtn" class="primary-btn" style="margin-top: 1rem;">
