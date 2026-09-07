@@ -75,10 +75,8 @@ body {
 /* CONTENT GRID */
 .content-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1.3fr 0.7fr; /* left wider than right */
   gap: 1.5rem;
-  padding: 1.5rem 2rem 2rem;
-  box-sizing: border-box;
 }
 
 .column {
