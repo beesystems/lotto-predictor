@@ -239,7 +239,6 @@ function buildRecencyChart(draws) {
   const data = labels.map(n => {
     for (let i = draws.length - 1; i >= 0; i--) {
       if (draws[i].numbers.includes(n)) {
-        // number of draws since last hit
         return draws.length - i;
       }
     }
@@ -274,8 +273,6 @@ function renderRankedSets(scores) {
 
   container.innerHTML = "";
 
-  // We already used scores[0..5] for Set 1
-  // Now render Sets 2–10, but stop if we run out of numbers
   for (let setIndex = 1; setIndex < 10; setIndex++) {
     const start = setIndex * 6;
     const end = Math.min(start + 6, scores.length);
@@ -400,7 +397,6 @@ function setupPredictionButton() {
     const mode = modeSelect.value;
     const scores = generateRankedScores(draws, mode);
 
-    // Set 1 (main prediction)
     const set1 = scores.slice(0, 6).map(s => s.number);
 
     output.innerHTML = "";
@@ -415,10 +411,7 @@ function setupPredictionButton() {
       output.appendChild(badge);
     });
 
-    // Structural chart for Set 1
     buildStructuralChart(set1);
-
-    // Render Sets 2–10
     renderRankedSets(scores);
   });
 }
