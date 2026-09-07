@@ -531,31 +531,56 @@ function buildJulianHeatmap() {
 
   const ctx = canvas.getContext("2d");
 
-  const labelsX = Array.from({ length: 49 }, (_, i) => i + 1);
-  const labelsY = Array.from({ length: 10 }, (_, i) => `Digit ${i}`);
-
-  const dataMatrix = julianDigitCounts.map(row =>
-    row.slice(1, 50) // remove index 0
-  );
+  const dataPoints = [];
+  for (let d = 0; d <= 9; d++) {
+    for (let n = 1; n <= 49; n++) {
+      const value = julianDigitCounts[d][n];
+      dataPoints.push({
+        x: n,
+        y: d,
+        v: value
+      });
+    }
+  }
 
   new Chart(ctx, {
-    type: "heatmap",
+    type: "scatter",
     data: {
-      labels: labelsX,
-      datasets: labelsY.map((label, i) => ({
-        label,
-        data: dataMatrix[i],
-        backgroundColor: dataMatrix[i].map(v =>
-          `rgba(123, 31, 162, ${v === 0 ? 0.05 : v / Math.max(...dataMatrix[i])})`
-        )
-      }))
+      datasets: [{
+        label: "Julian Digit Correlation",
+        data: dataPoints,
+        pointStyle: "rect",
+        pointRadius: 6,
+        backgroundColor: dataPoints.map(p => {
+          const intensity = p.v / Math.max(...dataPoints.map(dp => dp.v));
+          return `rgba(123, 31, 162, ${intensity || 0.05})`;
+        })
+      }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: { display: true, text: "Number (1–49)" },
+          min: 1,
+          max: 49,
+          ticks: { stepSize: 5 }
+        },
+        y: {
+          title: { display: true, text: "Julian Digit (0–9)" },
+          min: 0,
+          max: 9,
+          ticks: { stepSize: 1 }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
     }
   });
 }
+
 /* ============================================================
    DIGIT CLUSTER TABLE
 ============================================================ */
