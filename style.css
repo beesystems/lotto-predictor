@@ -55,9 +55,14 @@ body {
 ================================== */
 
 .main-layout {
-  margin-left: 240px;
-  padding: 2rem;
-  width: calc(100% - 240px);
+  margin-left: 240px; /* match sidebar width */
+  min-height: 100vh;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
 /* ===============================
