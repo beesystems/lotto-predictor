@@ -522,6 +522,99 @@ function buildDistributionChart(draws) {
 }
 
 /* ============================================================
+   JULIAN HEATMAP
+============================================================ */
+
+function buildJulianHeatmap() {
+  const canvas = document.getElementById("julianHeatmap");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  const labelsX = Array.from({ length: 49 }, (_, i) => i + 1);
+  const labelsY = Array.from({ length: 10 }, (_, i) => `Digit ${i}`);
+
+  const dataMatrix = julianDigitCounts.map(row =>
+    row.slice(1, 50) // remove index 0
+  );
+
+  new Chart(ctx, {
+    type: "heatmap",
+    data: {
+      labels: labelsX,
+      datasets: labelsY.map((label, i) => ({
+        label,
+        data: dataMatrix[i],
+        backgroundColor: dataMatrix[i].map(v =>
+          `rgba(123, 31, 162, ${v === 0 ? 0.05 : v / Math.max(...dataMatrix[i])})`
+        )
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+/* ============================================================
+   DIGIT CLUSTER TABLE
+============================================================ */
+
+function renderDigitClusterTable() {
+  const container = document.getElementById("digitClusterTable");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const table = document.createElement("table");
+  table.className = "freq-table";
+
+  for (let d = 0; d <= 9; d++) {
+    const row = document.createElement("tr");
+
+    const digitCell = document.createElement("td");
+    digitCell.textContent = `Digit ${d}`;
+
+    const topNumbers = [...Array(49).keys()]
+      .map(i => i + 1)
+      .sort((a, b) => julianDigitCounts[d][b] - julianDigitCounts[d][a])
+      .slice(0, 3);
+
+    const numbersCell = document.createElement("td");
+    numbersCell.textContent = topNumbers.join(", ");
+
+    row.appendChild(digitCell);
+    row.appendChild(numbersCell);
+    table.appendChild(row);
+  }
+
+  container.appendChild(table);
+}
+
+/* ============================================================
+   JULIAN-WEIGHTED PREDICTION
+============================================================ */
+
+function julianWeightedPrediction(scores, nextDrawDate) {
+  if (!nextDrawDate) return scores;
+
+  const digits = getJulianDigits(nextDrawDate);
+
+  return scores.map(s => {
+    let boost = 0;
+
+    digits.forEach(d => {
+      boost += julianDigitCounts[d][s.number] || 0;
+    });
+
+    return {
+      number: s.number,
+      score: s.score + boost * 0.01 // small temporal boost
+    };
+  }).sort((a, b) => b.score - a.score);
+}
+
+/* ============================================================
    RENDER 3 RANKED SETS (SORTED ASCENDING)
 ============================================================ */
 
