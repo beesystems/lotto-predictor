@@ -42,7 +42,7 @@
           <div class="info-toggle">
             <button class="info-btn">Info</button>
             <div class="info-content">
-              <p>This generator uses your prediction engine’s real frequency, recency, and structural scoring to create smart random sets. You can avoid hot/cold numbers, avoid consecutive numbers, enforce structural patterns, set sum ranges, and optionally include a bonus number.</p>
+              <p>This generator uses your prediction engine’s real frequency and structural scoring to create smart random sets. You can avoid hot/cold numbers, avoid consecutive numbers, enforce structural patterns, set sum ranges, and optionally include a bonus number.</p>
             </div>
           </div>
 
@@ -99,130 +99,25 @@
     </main>
   </div>
 
+  <!-- IMPORTANT: use your existing engine -->
+  <script src="app.js"></script>
+
   <script>
-    let frequencyCache = {};
-    let frequencyReady = false;
-
-    /* ============================================================
-       LOAD FREQUENCY FIRST (FIXES ALL-RED BALL ISSUE)
-    ============================================================ */
-    async function loadFrequency() {
-      try {
-        const response = await fetch("draws.json");
-        const data = await response.json();
-        const draws = Array.isArray(data.draws) ? data.draws : data;
-
-        const freq = {};
-        for (let i = 1; i <= 49; i++) freq[i] = 0;
-
-        draws.forEach(draw => {
-          draw.numbers.forEach(n => freq[n]++);
-        });
-
-        frequencyCache = freq;
-        frequencyReady = true;
-      } catch (err) {
-        console.error("Failed to load frequency:", err);
-        frequencyReady = false;
-      }
+    // Helper: check if frequencyCache is actually populated
+    function isFrequencyReady() {
+      if (!frequencyCache) return false;
+      const values = Object.values(frequencyCache);
+      return values.length === 49 && values.some(v => v > 0);
     }
 
-    window.addEventListener("DOMContentLoaded", loadFrequency);
-
-    /* ============================================================
-       SAFE HOT/WARM/COLD CLASSIFIER
-    ============================================================ */
-    function classifyFrequency(freq, number) {
-      const values = Object.values(freq);
-      const max = Math.max(...values);
-      const min = Math.min(...values);
-      const f = freq[number];
-
-      // Prevent "all hot" or "all cold" when freq not loaded
-      if (max === 0 || max === min) return "warm";
-
-      if (f >= max * 0.75) return "hot";
-      if (f <= min * 1.25) return "cold";
-      return "warm";
-    }
-
-    /* ============================================================
-       STRUCTURAL FUNCTIONS (FROM YOUR MODEL)
-    ============================================================ */
-    function structuralDecades(prediction) {
-      const buckets = [0, 0, 0, 0, 0];
-      prediction.forEach(n => buckets[Math.floor(n / 10)]++);
-      const ideal = prediction.length / 5;
-      const deviation = buckets.reduce((sum, b) => sum + Math.abs(b - ideal), 0);
-      return 1 - deviation / prediction.length;
-    }
-
-    function structuralOddEven(prediction) {
-      const odd = prediction.filter(n => n % 2 !== 0).length;
-      const even = prediction.length - odd;
-      return 1 - Math.abs(odd - even) / prediction.length;
-    }
-
-    function structuralLowHigh(prediction) {
-      const low = prediction.filter(n => n <= 24).length;
-      const high = prediction.length - low;
-      return 1 - Math.abs(low - high) / prediction.length;
-    }
-
-    function structuralPairs(prediction) {
-      let pairs = 0;
-      const sorted = [...prediction].sort((a,b) => a - b);
-      for (let i = 1; i < sorted.length; i++) {
-        if (sorted[i] === sorted[i-1] + 1) pairs++;
-      }
-      return 1 - pairs / prediction.length;
-    }
-
-    function structuralSum(prediction) {
-      const sum = prediction.reduce((a,b) => a + b, 0);
-      if (sum < 100 || sum > 180) return 0;
-      return 1 - Math.abs(sum - 140) / 140;
-    }
-
-    function structuralPrimes(prediction) {
-      const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
-      const count = prediction.filter(n => primes.includes(n)).length;
-      const ideal = prediction.length * 0.3;
-      return 1 - Math.abs(count - ideal) / prediction.length;
-    }
-
-    function structuralBreakdown(prediction) {
-      return {
-        oddEven: structuralOddEven(prediction),
-        lowHigh: structuralLowHigh(prediction),
-        decades: structuralDecades(prediction),
-        primes: structuralPrimes(prediction),
-        sum: structuralSum(prediction),
-        pairs: structuralPairs(prediction)
-      };
-    }
-
-    function matchesStructure(prediction) {
-      const b = structuralBreakdown(prediction);
-      return (
-        b.oddEven >= 0.70 &&
-        b.lowHigh >= 0.70 &&
-        b.decades >= 0.70 &&
-        b.primes >= 0.50 &&
-        b.sum >= 0.50 &&
-        b.pairs >= 0.70
-      );
-    }
-
-    /* ============================================================
-       RANDOM SET GENERATOR
-    ============================================================ */
     function generateRandomSet(options) {
       let set = [];
+      let safety = 0;
 
-      while (set.length < 6) {
+      while (set.length < 6 && safety < 500) {
+        safety++;
+
         const n = Math.floor(Math.random() * 49) + 1;
-
         if (set.includes(n)) continue;
 
         const category = classifyFrequency(frequencyCache, n);
@@ -238,16 +133,30 @@
         set.push(n);
       }
 
+      if (set.length < 6) return null;
+
       set.sort((a,b) => a - b);
 
       const sum = set.reduce((a,b) => a + b, 0);
       if (sum < options.sumMin || sum > options.sumMax) return null;
 
-      if (options.matchStructure && !matchesStructure(set)) return null;
+      if (options.matchStructure) {
+        const breakdown = structuralBreakdown(set);
+        const ok =
+          breakdown.oddEven >= 0.70 &&
+          breakdown.lowHigh >= 0.70 &&
+          breakdown.decades >= 0.70 &&
+          breakdown.primes >= 0.50 &&
+          breakdown.sum >= 0.50 &&
+          breakdown.pairs >= 0.70;
+        if (!ok) return null;
+      }
 
       if (options.includeBonus) {
+        let bonusSafety = 0;
         let bonus;
-        while (true) {
+        while (bonusSafety < 200) {
+          bonusSafety++;
           bonus = Math.floor(Math.random() * 49) + 1;
           if (!set.includes(bonus)) break;
         }
@@ -257,12 +166,9 @@
       return { main: set };
     }
 
-    /* ============================================================
-       GENERATE MULTIPLE SETS
-    ============================================================ */
     async function generateSets() {
-      if (!frequencyReady) {
-        alert("Loading frequency data… please wait.");
+      if (!isFrequencyReady()) {
+        alert("Frequency data is still loading. Try again in a second.");
         return;
       }
 
@@ -284,14 +190,14 @@
         let result = null;
         let attempts = 0;
 
-        while (!result && attempts < 2000) {
+        while (!result && attempts < 1000) {
           result = generateRandomSet(options);
           attempts++;
         }
 
         if (!result) {
           const fail = document.createElement("div");
-          fail.textContent = `Set ${i+1}: No valid combination found.`;
+          fail.textContent = `Set ${i+1}: No valid combination found with current rules.`;
           container.appendChild(fail);
           continue;
         }
@@ -311,7 +217,7 @@
         result.main.forEach(num => {
           const badge = document.createElement("div");
           badge.className = "badge";
-          badge.classList.add(classifyFrequency(frequencyCache, num));
+          badge.classList.add(classifyFrequency(frequencyCache, num)); // hot/warm/cold
           badge.textContent = num;
           badgeContainer.appendChild(badge);
         });
@@ -332,9 +238,6 @@
 
     document.getElementById("generateRandomBtn").addEventListener("click", generateSets);
 
-    /* ============================================================
-       COPY + PRINT
-    ============================================================ */
     document.getElementById("copyBtn").addEventListener("click", () => {
       const sets = [...document.querySelectorAll("#random-list")].map(d => d.textContent).join("\n");
       navigator.clipboard.writeText(sets);
