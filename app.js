@@ -240,7 +240,13 @@ function renderFrequencyChart(freq) {
           grid: { color: "rgba(0,0,0,0.05)" }
         },
         x: {
-          grid: { display: false }
+          grid: { display: false },
+          ticks: {
+            autoSkip: false,      // show every label
+            maxRotation: 90,      // rotate labels if needed
+            minRotation: 45,      // keeps them readable
+            font: { size: 10 }    // smaller font for clarity
+          }
         }
       }
     }
