@@ -27,7 +27,7 @@
 
     <header class="topbar">
       <h1>Smart Random Generator</h1>
-      <p>Create up to 20 random 6-number combinations using advanced rules powered by your prediction engine.</p>
+      <p>Create up to 20 random 6-number combinations using your prediction engine’s frequency data.</p>
     </header>
 
     <main class="content-grid">
@@ -38,13 +38,6 @@
         <!-- Controls -->
         <section class="card">
           <h3>Generate Random Sets</h3>
-
-          <div class="info-toggle">
-            <button class="info-btn">Info</button>
-            <div class="info-content">
-              <p>This generator uses your prediction engine’s real frequency and structural scoring to create smart random sets. You can avoid hot/cold numbers, avoid consecutive numbers, enforce structural patterns, set sum ranges, and optionally include a bonus number.</p>
-            </div>
-          </div>
 
           <label style="font-weight:600;">Number of Sets (1–20):</label>
           <input type="number" id="setCount" min="1" max="20" value="10" style="margin:0.5rem 0; padding:0.4rem; width:80px;">
@@ -62,11 +55,6 @@
           <div style="margin:0.75rem 0;">
             <input type="checkbox" id="avoidConsecutive">
             <label for="avoidConsecutive" style="font-weight:600;">Avoid Consecutive Numbers</label>
-          </div>
-
-          <div style="margin:0.75rem 0;">
-            <input type="checkbox" id="matchStructure">
-            <label for="matchStructure" style="font-weight:600;">Match Structural Patterns</label>
           </div>
 
           <div style="margin:0.75rem 0;">
@@ -99,28 +87,12 @@
     </main>
   </div>
 
-  <!-- IMPORTANT: use your existing engine -->
+  <!-- Use your existing engine -->
   <script src="app.js"></script>
 
   <script>
     /* ============================================================
-       MODERATE STRUCTURAL FILTER (Option B)
-    ============================================================ */
-    function matchesStructure(prediction) {
-      const b = structuralBreakdown(prediction);
-
-      return (
-        b.oddEven >= 0.55 &&
-        b.lowHigh >= 0.55 &&
-        b.decades >= 0.55 &&
-        b.primes >= 0.40 &&
-        b.sum >= 0.40 &&
-        b.pairs >= 0.55
-      );
-    }
-
-    /* ============================================================
-       RANDOM SET GENERATOR
+       RANDOM SET GENERATOR (NO STRUCTURAL FILTERING)
     ============================================================ */
     function generateRandomSet(options) {
       let set = [];
@@ -139,9 +111,6 @@
 
         if (options.avoidConsecutive && set.some(x => Math.abs(x - n) === 1)) continue;
 
-        const tempSet = [...set, n];
-        if (options.matchStructure && !matchesStructure(tempSet)) continue;
-
         set.push(n);
       }
 
@@ -151,8 +120,6 @@
 
       const sum = set.reduce((a,b) => a + b, 0);
       if (sum < options.sumMin || sum > options.sumMax) return null;
-
-      if (options.matchStructure && !matchesStructure(set)) return null;
 
       if (options.includeBonus) {
         let bonusSafety = 0;
@@ -182,7 +149,6 @@
         avoidHot: document.getElementById("avoidHot").checked,
         avoidCold: document.getElementById("avoidCold").checked,
         avoidConsecutive: document.getElementById("avoidConsecutive").checked,
-        matchStructure: document.getElementById("matchStructure").checked,
         includeBonus: document.getElementById("includeBonus").checked,
         sumMin: parseInt(document.getElementById("sumMin").value),
         sumMax: parseInt(document.getElementById("sumMax").value)
