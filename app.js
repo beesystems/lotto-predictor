@@ -301,6 +301,129 @@ function buildRecencyChart(draws) {
 }
 
 // ===============================
+//  DISTRIBUTION (SUM) HISTOGRAM
+// ===============================
+
+let distributionChartInstance = null;
+
+function buildDistributionChart(draws) {
+  const canvas = document.getElementById("distributionChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+
+  // Compute sums (excluding bonus)
+  const sums = draws.map(d => d.numbers.reduce((a, b) => a + b, 0));
+
+  // Compute median
+  const sorted = [...sums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 !== 0
+    ? sorted[mid]
+    : (sorted[mid - 1] + sorted[mid]) / 2;
+
+  // Auto-bin using Sturges' formula
+  const n = sums.length;
+  const bins = Math.ceil(Math.log2(n) + 1);
+
+  const min = Math.min(...sums);
+  const max = Math.max(...sums);
+  const binWidth = (max - min) / bins;
+
+  const histogram = new Array(bins).fill(0);
+
+  sums.forEach(sum => {
+    let index = Math.floor((sum - min) / binWidth);
+    if (index >= bins) index = bins - 1;
+    histogram[index]++;
+  });
+
+  const labels = histogram.map((_, i) => {
+    const start = Math.round(min + i * binWidth);
+    const end = Math.round(min + (i + 1) * binWidth);
+    return `${start}–${end}`;
+  });
+
+  // Destroy old chart if exists
+  if (distributionChartInstance) distributionChartInstance.destroy();
+
+  distributionChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Sum Distribution",
+          data: histogram,
+          backgroundColor: "rgba(25, 118, 210, 0.25)", // transparent bars
+          borderColor: "rgba(25, 118, 210, 0.8)",
+          borderWidth: 1
+        },
+        // Median line
+        {
+          label: "Median",
+          data: new Array(bins).fill(null).map((_, i) => {
+            const start = min + i * binWidth;
+            const end = min + (i + 1) * binWidth;
+            return median >= start && median < end ? Math.max(...histogram) : null;
+          }),
+          type: "line",
+          borderColor: "#e63946", // red
+          borderWidth: 3,
+          pointRadius: 0
+        },
+        // Left cluster (120)
+        {
+          label: "Cluster 120",
+          data: new Array(bins).fill(null).map((_, i) => {
+            const start = min + i * binWidth;
+            const end = min + (i + 1) * binWidth;
+            return 120 >= start && 120 < end ? Math.max(...histogram) : null;
+          }),
+          type: "line",
+          borderColor: "#1976d2", // blue
+          borderWidth: 3,
+          pointRadius: 0
+        },
+        // Right cluster (160)
+        {
+          label: "Cluster 160",
+          data: new Array(bins).fill(null).map((_, i) => {
+            const start = min + i * binWidth;
+            const end = min + (i + 1) * binWidth;
+            return 160 >= start && 160 < end ? Math.max(...histogram) : null;
+          }),
+          type: "line",
+          borderColor: "#1976d2", // blue
+          borderWidth: 3,
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            font: { size: 13, family: "Segoe UI" }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// ===============================
 //  RENDER 3 RANKED SETS (ONE CARD)
 // ===============================
 
